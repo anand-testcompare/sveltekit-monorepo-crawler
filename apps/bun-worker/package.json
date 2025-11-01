@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "bun --watch src/index.ts",
 		"build": "bun build src/index.ts",
-		"start": "bun run dist/index.js",
+		"start": "bun run ./dist",
 		"format": "prettier --write .",
 		"lint": "prettier --check ."
 	},
