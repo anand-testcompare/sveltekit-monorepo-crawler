@@ -1,5 +1,6 @@
 <script lang="ts">
 	import logo from '$lib/assets/favicon.svg';
+	import ChannelsDemo from '$lib/components/ChannelsDemo.svelte';
 </script>
 
 <main class="flex grow flex-col items-center justify-center gap-4">
@@ -8,9 +9,13 @@
 		<h2 class="text-3xl font-bold"><span class="text-primary">SvelteKit</span> App</h2>
 	</div>
 	<p class="text-center text-lg text-neutral-500">Welcome to your new SvelteKit project.</p>
-	<!-- {#each channels as channel}
-		<div class="flex flex-row items-center justify-center gap-2">
-			<p>{channel.name}</p>
-		</div>
-	{/each} -->
+	<svelte:boundary>
+		{#snippet pending()}
+			<div>loading...</div>
+		{/snippet}
+		{#snippet failed(error)}
+			<div>error: {error instanceof Error ? error.message : 'Unknown error'}</div>
+		{/snippet}
+		<ChannelsDemo />
+	</svelte:boundary>
 </main>
