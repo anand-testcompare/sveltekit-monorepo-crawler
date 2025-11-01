@@ -1,2 +1,1 @@
-console.log(Bun.env.DATABASE_URL);
-console.log("Hello via deej!");
+console.log('Hello via deej!');
