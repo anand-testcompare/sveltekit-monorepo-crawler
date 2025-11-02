@@ -1,11 +1,17 @@
+import z from 'zod';
 import { DB_QUERIES, DB_MUTATIONS } from '../db';
 import { getVideoComments } from '../youtube/helpers';
 import { classifyComment, getSponsor } from '../ai/helpers';
 import { sendVideoLiveToDiscord, sendFlaggedCommentToDiscord } from '../notifications/discord';
 import { sendVideoLiveToTodoist } from '../notifications/todoist';
 
+const videoHandlerSchema = z.object({
+	ytVideoId: z.string(),
+	wasInserted: z.boolean()
+});
+
 export const videoHandler = async (payload: unknown) => {
-	const { ytVideoId, wasInserted } = payload as { ytVideoId: string; wasInserted: boolean };
+	const { ytVideoId, wasInserted } = videoHandlerSchema.parse(payload);
 
 	const WORKFLOW_START_TIME = Date.now();
 	const WORKFLOW_DISPLAY_KEY = `syncVideo-${ytVideoId}-${WORKFLOW_START_TIME}`;
@@ -161,7 +167,9 @@ export const videoHandler = async (payload: unknown) => {
 					}
 
 					let sponsorName: string | null = null;
-					const sponsorAttachment = await DB_QUERIES.getSponsorAttachmentByVideoId(comment.ytVideoId);
+					const sponsorAttachment = await DB_QUERIES.getSponsorAttachmentByVideoId(
+						comment.ytVideoId
+					);
 
 					if (sponsorAttachment) {
 						const sponsor = await DB_QUERIES.getSponsorById(sponsorAttachment.sponsorId);
@@ -213,4 +221,3 @@ export const videoHandler = async (payload: unknown) => {
 		`${WORKFLOW_DISPLAY_KEY} - Video sync completed in ${Date.now() - WORKFLOW_START_TIME}ms`
 	);
 };
-

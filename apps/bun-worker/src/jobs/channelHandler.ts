@@ -1,9 +1,14 @@
+import z from 'zod';
 import { DB_QUERIES, DB_MUTATIONS } from '../db';
 import { parseYouTubeRSS } from '../youtube/helpers';
 import { enqueueJob } from '../queue';
 
+const channelHandlerSchema = z.object({
+	ytChannelId: z.string()
+});
+
 export const channelHandler = async (payload: unknown) => {
-	const { ytChannelId } = payload as { ytChannelId: string };
+	const { ytChannelId } = channelHandlerSchema.parse(payload);
 
 	const channel = await DB_QUERIES.getChannel(ytChannelId);
 	if (!channel) {
@@ -37,10 +42,10 @@ export const channelHandler = async (payload: unknown) => {
 	);
 
 	for (const result of videoResults) {
+		console.log(result);
 		await enqueueJob('video', {
 			ytVideoId: result.ytVideoId,
 			wasInserted: result.wasInserted
 		});
 	}
 };
-

@@ -1,29 +1,36 @@
 <script lang="ts">
-	import logo from '$lib/assets/favicon.svg';
-	import ChannelsDemo from '$lib/components/ChannelsDemo.svelte';
-	const { data } = $props();
+	import { getAuthStore } from '$lib/auth/AuthStore.svelte.js';
+	import RootLoader from '$lib/components/RootLoader.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { Input } from '$lib/components/ui/input';
+	import { Label } from '$lib/components/ui/label';
+
+	const authStore = getAuthStore();
+
+	let authPassword = $state('');
+
+	const handleSubmit = async (event: SubmitEvent) => {
+		event.preventDefault();
+		const result = await authStore.handleSignIn(authPassword);
+		if (!result) {
+			alert('Failed to sign in');
+		}
+	};
 </script>
 
-<main class="flex grow flex-col items-center justify-center gap-4">
-	<div class="flex flex-row items-center justify-center gap-2">
-		<img src={logo} alt="Logo" class="h-24 w-24" />
-		<h2 class="text-3xl font-bold"><span class="text-primary">SvelteKit</span> App</h2>
-	</div>
-	<p class="text-center text-lg text-neutral-500">Welcome to your new SvelteKit project.</p>
-
-	<svelte:boundary>
-		<ChannelsDemo />
-		{#snippet pending()}
-			<div>loading...</div>
-		{/snippet}
-		{#snippet failed(error)}
-			<div>error: {error instanceof Error ? error.message : 'Unknown error'}</div>
-		{/snippet}
-	</svelte:boundary>
-
-	{#each data.channels as channel}
-		<div class="flex flex-row items-center justify-center gap-2">
-			<p>{channel.name}</p>
+{#if authStore.isLoading}
+	<RootLoader />
+{:else if authStore.isAuthenticated}
+	<main class="flex grow flex-col items-center justify-center gap-4">
+		<Button href="/app">Go to app</Button>
+	</main>
+{:else}
+	<form class="flex grow flex-col items-start justify-center gap-4" onsubmit={handleSubmit}>
+		<h2 class="text-2xl font-bold">Sign in</h2>
+		<div class="flex w-full max-w-sm flex-col gap-1.5">
+			<Label for="password">Password</Label>
+			<Input type="password" id="password" placeholder="password" bind:value={authPassword} />
 		</div>
-	{/each}
-</main>
+		<Button type="submit">Sign in</Button>
+	</form>
+{/if}
