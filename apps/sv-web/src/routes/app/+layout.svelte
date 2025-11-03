@@ -21,26 +21,24 @@
 {#if authStore.isLoading}
 	<RootLoader />
 {:else if authStore.isAuthenticated}
-	<div class="flex h-screen w-full">
-		<aside class="flex w-64 flex-col border-r border-sidebar-border bg-sidebar p-4">
-			<nav class="flex flex-col gap-2">
-				<Button href="/app/channel/all" variant="ghost" class="justify-start">All Channels</Button>
-			</nav>
-			<div class="mt-auto flex flex-col gap-2">
-				<div class="flex gap-2">
-					<Button onclick={toggleMode} variant="outline" size="icon" class="flex-1">
-						{#if mode.current === 'dark'}
-							<Sun />
-						{:else}
-							<Moon />
-						{/if}
-					</Button>
-					<Button onclick={authStore.handleSignOut} class="flex-1">Sign Out</Button>
-				</div>
+	<div class="flex h-screen w-full flex-col">
+		<nav
+			class="flex items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-1.5"
+		>
+			<Button href="/app/channel/all" variant="ghost">All Channels</Button>
+			<div class="flex gap-2">
+				<Button onclick={toggleMode} variant="outline" size="icon-sm">
+					{#if mode.current === 'dark'}
+						<Sun />
+					{:else}
+						<Moon />
+					{/if}
+				</Button>
+				<Button onclick={authStore.handleSignOut} size="sm">Sign Out</Button>
 			</div>
-		</aside>
+		</nav>
 
-		<main class="h-screen w-full overflow-auto">
+		<main class="h-full w-full overflow-auto">
 			{@render children()}
 		</main>
 	</div>
