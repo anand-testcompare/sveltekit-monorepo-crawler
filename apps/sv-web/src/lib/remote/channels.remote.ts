@@ -162,5 +162,6 @@ export const remoteGetVideoDetails = query(z.string(), async (ytVideoId) => {
 		}
 		return error(500, { message: result.message });
 	}
+
 	return result.data;
 });

@@ -1,8 +1,11 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { ArrowRight } from '@lucide/svelte';
+	import { page } from '$app/state';
 
 	const { message } = $props<{ message: string }>();
+
+	console.error(page.error);
 </script>
 
 <div class="flex h-screen flex-col items-start justify-center gap-4">

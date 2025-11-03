@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import AppWrapper from '$lib/app/AppWrapper.svelte';
+	import ErrorDisplay from '$lib/app/ErrorDisplay.svelte';
 	import { getAuthStore } from '$lib/auth/AuthStore.svelte';
 	import RootLoader from '$lib/components/RootLoader.svelte';
 
@@ -19,7 +20,13 @@
 	<RootLoader />
 {:else if authStore.isAuthenticated}
 	<AppWrapper>
-		{@render children()}
+		<svelte:boundary>
+			{#snippet pending()}
+				<RootLoader />
+			{/snippet}
+
+			{@render children()}
+		</svelte:boundary>
 	</AppWrapper>
 {:else}
 	<p>You are not authenticated</p>
