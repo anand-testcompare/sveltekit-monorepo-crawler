@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { getAppStore } from '$lib/app/AppStore.svelte';
+	import { goto } from '$app/navigation';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -7,7 +7,6 @@
 	import Textarea from '$lib/components/ui/textarea/textarea.svelte';
 	import { remoteCreateChannel } from '$lib/remote/channels.remote';
 
-	const appStore = getAppStore();
 	let isCreating = $state(false);
 
 	const { channelName, findSponsorPrompt, ytChannelId } = remoteCreateChannel.fields;
@@ -19,9 +18,7 @@
 			isCreating = true;
 			await submit();
 			form.reset();
-			await new Promise((r) => setTimeout(r, 300));
-			await appStore.refreshChannels();
-			appStore.selectedChannelId = data.ytChannelId;
+			await goto(`/app/channel/${data.ytChannelId}`);
 		} catch (error) {
 			console.error(error);
 		} finally {

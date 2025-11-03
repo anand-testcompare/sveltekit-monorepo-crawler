@@ -20,7 +20,7 @@
 			<h1 class="text-3xl font-bold text-foreground">Channels</h1>
 			<p class="mt-2 text-sm text-muted-foreground">Manage and view statistics for your channels</p>
 		</div>
-		<Button href="/app/channels/create">+ Add Channel</Button>
+		<Button href="/app/channel/create">+ Add Channel</Button>
 	</div>
 
 	<svelte:boundary>

@@ -1,6 +1,8 @@
 <script lang="ts">
 	const { sponsorData, channelId } = $props<{
-		sponsorData: Awaited<ReturnType<typeof import('$lib/remote/channels.remote').remoteGetSponsorDetails>>;
+		sponsorData: Awaited<
+			ReturnType<typeof import('$lib/remote/channels.remote').remoteGetSponsorDetails>
+		>;
 		channelId: string;
 	}>();
 
@@ -65,7 +67,7 @@
 					{#each sponsorData.videos as video}
 						<tr class="hover:bg-muted/50">
 							<td class="px-6 py-4">
-								<a href="/app/channels/{channelId}/videos/{video.ytVideoId}">
+								<a href="/app/channel/{channelId}/video/{video.ytVideoId}">
 									<img
 										src={video.thumbnailUrl}
 										alt={video.title}
@@ -75,7 +77,7 @@
 							</td>
 							<td class="px-6 py-4">
 								<a
-									href="/app/channels/{channelId}/videos/{video.ytVideoId}"
+									href="/app/channel/{channelId}/video/{video.ytVideoId}"
 									class="max-w-md truncate text-sm font-medium text-card-foreground transition-colors hover:text-primary"
 								>
 									{video.title}
@@ -97,4 +99,3 @@
 		</div>
 	{/if}
 </div>
-

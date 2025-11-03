@@ -35,80 +35,79 @@
 			<div class="max-h-[600px] overflow-y-auto">
 				<table class="w-full">
 					<thead class="sticky top-0 z-10 border-b border-border bg-muted">
-					<tr>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-							>Thumbnail</th
-						>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-							>Title</th
-						>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-							>Views</th
-						>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-							>Likes</th
-						>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-							>Sponsor</th
-						>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-							>Published</th
-						>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-border">
-					{#each videos as video}
-						<tr class="hover:bg-muted/50">
-							<td class="px-6 py-4">
-								<a href="/app/channels/{channelId}/videos/{video.ytVideoId}">
-									<img
-										src={video.thumbnailUrl}
-										alt={video.title}
-										class="h-12 w-20 rounded object-cover transition-opacity hover:opacity-80"
-									/>
-								</a>
-							</td>
-							<td class="px-6 py-4">
-								<a
-									href="/app/channels/{channelId}/videos/{video.ytVideoId}"
-									class="max-w-md truncate text-sm font-medium text-card-foreground transition-colors hover:text-primary"
-								>
-									{video.title}
-								</a>
-							</td>
-							<td class="px-6 py-4 text-sm text-muted-foreground"
-								>{formatNumber(video.viewCount)}</td
+						<tr>
+							<th
+								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+								>Thumbnail</th
 							>
-							<td class="px-6 py-4 text-sm text-muted-foreground"
-								>{formatNumber(video.likeCount)}</td
+							<th
+								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+								>Title</th
 							>
-							<td class="px-6 py-4 text-sm text-muted-foreground">
-								{#if video.sponsor}
-									<a
-										href="/app/channels/{channelId}/sponsors/{video.sponsor.sponsorId}"
-										class="inline-flex items-center rounded-full px-3 py-1 font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-									>
-										{video.sponsor.name}
-									</a>
-								{:else}
-									None
-								{/if}
-							</td>
-							<td class="px-6 py-4 text-sm text-muted-foreground"
-								>{formatDate(video.publishedAt)}</td
+							<th
+								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+								>Views</th
+							>
+							<th
+								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+								>Likes</th
+							>
+							<th
+								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+								>Sponsor</th
+							>
+							<th
+								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+								>Published</th
 							>
 						</tr>
-					{/each}
+					</thead>
+					<tbody class="divide-y divide-border">
+						{#each videos as video}
+							<tr class="hover:bg-muted/50">
+								<td class="px-6 py-4">
+									<a href="/app/channel/{channelId}/video/{video.ytVideoId}">
+										<img
+											src={video.thumbnailUrl}
+											alt={video.title}
+											class="h-12 w-20 rounded object-cover transition-opacity hover:opacity-80"
+										/>
+									</a>
+								</td>
+								<td class="px-6 py-4">
+									<a
+										href="/app/channel/{channelId}/video/{video.ytVideoId}"
+										class="max-w-md truncate text-sm font-medium text-card-foreground transition-colors hover:text-primary"
+									>
+										{video.title}
+									</a>
+								</td>
+								<td class="px-6 py-4 text-sm text-muted-foreground"
+									>{formatNumber(video.viewCount)}</td
+								>
+								<td class="px-6 py-4 text-sm text-muted-foreground"
+									>{formatNumber(video.likeCount)}</td
+								>
+								<td class="px-6 py-4 text-sm text-muted-foreground">
+									{#if video.sponsor}
+										<a
+											href="/app/channel/{channelId}/sponsor/{video.sponsor.sponsorId}"
+											class="inline-flex items-center rounded-full px-3 py-1 font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+										>
+											{video.sponsor.name}
+										</a>
+									{:else}
+										None
+									{/if}
+								</td>
+								<td class="px-6 py-4 text-sm text-muted-foreground"
+									>{formatDate(video.publishedAt)}</td
+								>
+							</tr>
+						{/each}
 					</tbody>
 				</table>
 			</div>
 		</div>
-		{/if}
+	{/if}
 </div>
-

@@ -24,11 +24,12 @@
 	};
 </script>
 
-{#if !sponsors || sponsors.length === 0}
+{#if sponsors.length === 0}
 	<div class="rounded-lg border border-border bg-muted p-8">
 		<p class="text-center text-muted-foreground">No sponsors found</p>
 	</div>
 {:else}
+	<h2 class="mb-4 text-xl font-semibold text-foreground">All Channel Sponsors</h2>
 	<div class="overflow-hidden rounded-lg border border-border bg-card">
 		<table class="w-full">
 			<thead class="border-b border-border bg-muted">
@@ -64,7 +65,7 @@
 					<tr class="hover:bg-muted/50">
 						<td class="px-6 py-4">
 							<a
-								href="/app/channels/{channelId}/sponsors/{sponsor.sponsorId}"
+								href="/app/channel/{channelId}/sponsor/{sponsor.sponsorId}"
 								class="text-sm font-medium text-card-foreground transition-colors hover:text-primary"
 							>
 								{sponsor.name}
@@ -95,4 +96,3 @@
 		</table>
 	</div>
 {/if}
-

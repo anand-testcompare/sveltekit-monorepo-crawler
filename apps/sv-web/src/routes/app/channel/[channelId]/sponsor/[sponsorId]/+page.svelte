@@ -1,28 +1,27 @@
 <script lang="ts">
 	import { remoteGetSponsorDetails, remoteGetChannelDetails } from '$lib/remote/channels.remote';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
-	import { Spinner } from '$lib/components/ui/spinner';
 	import SponsorStats from '$lib/components/SponsorStats.svelte';
 	import SponsorVideosTable from '$lib/components/SponsorVideosTable.svelte';
+	import { page } from '$app/state';
 
-	const { data } = $props();
+	const sponsorId = $derived(page.params.sponsorId as string);
+	const channelId = $derived(page.params.channelId as string);
 
-	const sponsor = $derived(await remoteGetSponsorDetails(data.sponsorId));
-	const channel = $derived(await remoteGetChannelDetails(data.channelId));
+	const sponsor = $derived(await remoteGetSponsorDetails(sponsorId));
+	const channel = $derived(await remoteGetChannelDetails(channelId));
 </script>
 
-<div class="p-8">
+<div class="">
 	<div class="mb-6">
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app/channels">Channels</Breadcrumb.Link>
+					<Breadcrumb.Link href="/app/channel/all">Channels</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app/channels/{data.channelId}/channel"
-						>{channel.name}</Breadcrumb.Link
-					>
+					<Breadcrumb.Link href="/app/channel/{channelId}">{channel.name}</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
@@ -42,6 +41,6 @@
 
 	<div class="space-y-8">
 		<SponsorStats sponsorData={sponsor} />
-		<SponsorVideosTable sponsorData={sponsor} channelId={data.channelId} />
+		<SponsorVideosTable sponsorData={sponsor} {channelId} />
 	</div>
 </div>

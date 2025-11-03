@@ -3,11 +3,13 @@
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import VideoNotificationsTable from '$lib/components/VideoNotificationsTable.svelte';
 	import VideoCommentsTable from '$lib/components/VideoCommentsTable.svelte';
+	import { page } from '$app/state';
 
-	const { data } = $props();
+	const videoId = $derived(page.params.videoId as string);
+	const channelId = $derived(page.params.channelId as string);
 
-	const videoData = $derived(await remoteGetVideoDetails(data.videoId));
-	const channel = $derived(await remoteGetChannelDetails(data.channelId));
+	const videoData = $derived(await remoteGetVideoDetails(videoId));
+	const channel = $derived(await remoteGetChannelDetails(channelId));
 
 	const formatNumber = (num: number) => {
 		if (num >= 1000000) {
@@ -28,18 +30,16 @@
 	};
 </script>
 
-<div class="p-8">
+<div class="">
 	<div class="mb-6">
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app/channels">Channels</Breadcrumb.Link>
+					<Breadcrumb.Link href="/app/channel/all">Channels</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app/channels/{data.channelId}/channel"
-						>{channel.name}</Breadcrumb.Link
-					>
+					<Breadcrumb.Link href="/app/channel/{channelId}">{channel.name}</Breadcrumb.Link>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
@@ -71,7 +71,7 @@
 					<h2 class="text-sm font-medium text-muted-foreground">Channel</h2>
 					{#if videoData.channel}
 						<a
-							href="/app/channels/{videoData.channel.ytChannelId}/channel"
+							href="/app/channel/{videoData.channel.ytChannelId}"
 							class="mt-1 text-lg font-semibold text-foreground hover:text-primary"
 						>
 							{videoData.channel.name}
@@ -94,7 +94,7 @@
 					<div>
 						<h3 class="text-sm font-medium text-muted-foreground">Sponsor</h3>
 						<a
-							href="/app/channels/{data.channelId}/sponsors/{videoData.sponsor.sponsorId}"
+							href="/app/channel/{channelId}/sponsor/{videoData.sponsor.sponsorId}"
 							class="mt-1 inline-flex items-center rounded-full px-3 py-1 font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground"
 						>
 							{videoData.sponsor.name}

@@ -35,6 +35,7 @@ export const remoteCreateChannel = form(
 			console.error(createChannel.cause);
 			return error(500, { message: createChannel.message });
 		}
+		await remoteGetAllChannels().refresh();
 		return {
 			success: true
 		};
