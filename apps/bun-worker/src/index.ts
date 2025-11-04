@@ -1,8 +1,8 @@
 import { getRecentVideosForChannel, syncVideo } from '@r8y/channel-sync';
 import { DB_QUERIES } from './db';
-import { errAsync } from 'neverthrow';
 
 const main = async () => {
+	const start = performance.now();
 	const channels = await DB_QUERIES.getAllChannels();
 	if (channels.isErr()) {
 		console.error('LIVE CRAWLER CRASHED: Failed to get all channels', channels.error);
@@ -25,6 +25,7 @@ const main = async () => {
 			const recentVideos = result.value.value;
 			await Promise.allSettled(
 				recentVideos.map(async (video) => {
+					console.log(`Syncing video ${video.videoId} - ${video.title}`);
 					const syncVideoResult = await syncVideo({
 						ytVideoId: video.videoId
 					});
@@ -41,6 +42,13 @@ const main = async () => {
 	}
 
 	console.log(`LIVE CRAWLER COMPLETED: ${successCount} videos synced, ${errorCount} videos failed`);
+	console.log(`LIVE CRAWLER TOOK ${performance.now() - start}ms`);
 };
+
+const THIRTY_MINUTES_MS = 30 * 60 * 1000;
+
+setInterval(() => {
+	main();
+}, THIRTY_MINUTES_MS);
 
 main();
