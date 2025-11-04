@@ -12,9 +12,11 @@
 		}
 		return num.toString();
 	};
+
+	$inspect('channels', channels);
 </script>
 
-{#if !channels || channels.length === 0}
+{#if channels.length === 0}
 	<div class="flex items-center justify-center rounded-lg border border-border bg-muted p-8">
 		<div class="text-center">
 			<p class="text-muted-foreground">No channels found</p>
