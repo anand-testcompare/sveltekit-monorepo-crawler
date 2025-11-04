@@ -1,0 +1,27 @@
+{
+	"name": "@r8y/channel-sync",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"format": "prettier --write .",
+		"lint": "prettier --check ."
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"prettier": "^3.6.2"
+	},
+	"peerDependencies": {
+		"typescript": "^5",
+		"@r8y/db": "*"
+	},
+	"dependencies": {
+		"@doist/todoist-api-typescript": "^6.0.0",
+		"@openrouter/ai-sdk-provider": "^1.2.0",
+		"ai": "^5.0.87",
+		"discord.js": "^14.24.2",
+		"googleapis": "^164.1.0",
+		"neverthrow": "^8.2.0",
+		"zod": "^4.1.12"
+	}
+}

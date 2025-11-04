@@ -14,6 +14,7 @@
 		"@doist/todoist-api-typescript": "^6.0.0",
 		"@openrouter/ai-sdk-provider": "^1.2.0",
 		"@r8y/db": "*",
+		"@r8y/channel-sync": "*",
 		"ai": "^5.0.86",
 		"discord.js": "^14.24.2",
 		"googleapis": "^164.1.0",
