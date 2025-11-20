@@ -5,7 +5,8 @@
 	},
 	"scripts": {
 		"format": "prettier --write .",
-		"lint": "prettier --check ."
+		"lint": "prettier --check .",
+		"backfill": "bun run scripts/backfill.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
