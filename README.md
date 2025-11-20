@@ -1,7 +1,10 @@
 # r8y 3.0
 
-*monorepo because I feel like it idk man*
+_monorepo because I feel like it idk man_
 
-**bun-worker**
+## todos
 
-- bunch of background jobs to handle syncing the videos
+- effectify the sv app
+- setup local helpers for backfilling data on the channels
+- do a durability pass on the app
+- start to add in more advanced features to the sv app: searching and the big boy ai agent...
