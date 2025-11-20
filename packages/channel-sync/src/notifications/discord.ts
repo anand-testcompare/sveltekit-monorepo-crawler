@@ -1,36 +1,15 @@
 import { Client, GatewayIntentBits } from 'discord.js';
-import { ResultAsync, err } from 'neverthrow';
-import { DB_MUTATIONS } from '../db-legacy/mutations';
+import { Effect } from 'effect';
+import { DbService } from '../db';
+import { TaggedError } from 'effect/Data';
 
-const discordClient = new Client({
-	intents: [GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds]
-});
-
-const sendMessageToDiscord = async (message: string) => {
-	await discordClient.login(Bun.env.DISCORD_BOT_TOKEN!);
-
-	const channelResult = await ResultAsync.fromPromise(
-		discordClient.channels.fetch(Bun.env.DISCORD_CHANNEL_ID!),
-		(error) => new Error(`Failed to fetch channel: ${error}`)
-	);
-
-	if (channelResult.isErr()) {
-		return channelResult;
+class DiscordError extends TaggedError('DiscordError') {
+	constructor(message: string, options?: { cause?: unknown }) {
+		super();
+		this.message = message;
+		this.cause = options?.cause;
 	}
-
-	const channel = channelResult.value;
-
-	if (!channel || !channel.isSendable()) {
-		return err(new Error('Channel not found or not sendable'));
-	}
-
-	const messageSendResult = await ResultAsync.fromPromise(
-		channel.send(message) as Promise<any>,
-		(error) => new Error(`Failed to send message: ${error}`)
-	);
-
-	return messageSendResult;
-};
+}
 
 type VideoLiveMessageFields = {
 	videoUrl: string;
@@ -74,87 +53,144 @@ comment link: <${fields.commentUrl}>
 \`\`\`
 `;
 
-export const sendVideoLiveToDiscord = async (
-	video: {
-		ytVideoId: string;
-		title: string;
-	},
-	sponsor: { name: string } | null
-) => {
-	const videoUrl = `https://www.youtube.com/watch?v=${video.ytVideoId}`;
+const discordService = Effect.gen(function* () {
+	const discordBotToken = yield* Effect.sync(() => Bun.env.DISCORD_BOT_TOKEN);
+	const discordChannelId = yield* Effect.sync(() => Bun.env.DISCORD_CHANNEL_ID);
 
-	const message = videoLiveMessageTemplate({
-		videoUrl,
-		videoTitle: video.title,
-		videoSponsor: sponsor?.name || null
-	});
+	if (!discordBotToken) {
+		return yield* Effect.die('DISCORD_BOT_TOKEN is not set');
+	}
 
-	const result = await sendMessageToDiscord(message);
+	if (!discordChannelId) {
+		return yield* Effect.die('DISCORD_CHANNEL_ID is not set');
+	}
 
-	if (result.isErr()) {
-		const errorMessage =
-			result.error instanceof Error ? result.error.message : String(result.error);
-		console.error('DISCORD, failed to send message', errorMessage);
-		await DB_MUTATIONS.logNotification({
-			ytVideoId: video.ytVideoId,
-			type: 'discord_video_live',
-			success: false,
-			message: `Failed to send message to Discord: ${errorMessage}`
+	const client = yield* Effect.acquireRelease(
+		Effect.sync(
+			() =>
+				new Client({
+					intents: [GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds]
+				})
+		),
+		(client) =>
+			Effect.tryPromise(() => client.destroy()).pipe(
+				Effect.catchAll((err) => {
+					console.error('Failed to destroy Discord client', err);
+					return Effect.succeed(null);
+				})
+			)
+	);
+
+	yield* Effect.tryPromise({
+		try: () => client.login(discordBotToken),
+		catch: (err) => new DiscordError('Failed to login to Discord', { cause: err })
+	}).pipe(Effect.tap((res) => Effect.log(`Logged in to Discord: ${res}`)));
+
+	const db = yield* DbService;
+
+	const sendMessage = (message: string) =>
+		Effect.gen(function* () {
+			const channel = yield* Effect.tryPromise({
+				try: () => client.channels.fetch(discordChannelId),
+				catch: (err) => new DiscordError('Failed to fetch channel', { cause: err })
+			});
+
+			if (!channel || !channel.isSendable()) {
+				return yield* Effect.fail(new DiscordError('Channel not found or not sendable'));
+			}
+
+			yield* Effect.tryPromise({
+				try: () => channel.send(message) as Promise<any>,
+				catch: (err) => new DiscordError('Failed to send message', { cause: err })
+			});
 		});
-		return;
-	}
 
-	await DB_MUTATIONS.logNotification({
-		ytVideoId: video.ytVideoId,
-		type: 'discord_video_live',
-		success: true,
-		message: 'Message sent to Discord'
-	});
-};
+	return {
+		sendVideoLiveToDiscord: (
+			video: {
+				ytVideoId: string;
+				title: string;
+			},
+			sponsor: { name: string } | null
+		) =>
+			Effect.gen(function* () {
+				const videoUrl = `https://www.youtube.com/watch?v=${video.ytVideoId}`;
+				const message = videoLiveMessageTemplate({
+					videoUrl,
+					videoTitle: video.title,
+					videoSponsor: sponsor?.name || null
+				});
 
-export const sendFlaggedCommentToDiscord = async (
-	comment: {
-		ytCommentId: string;
-		text: string;
-		likeCount: number;
-		author: string;
-		publishedAt: Date;
-	},
-	video: {
-		ytVideoId: string;
-	}
-) => {
-	const commentUrl = `https://www.youtube.com/watch?v=${video.ytVideoId}&lc=${comment.ytCommentId}`;
+				yield* sendMessage(message).pipe(
+					Effect.tap(() =>
+						db.logNotification({
+							ytVideoId: video.ytVideoId,
+							type: 'discord_video_live',
+							success: true,
+							message: 'Message sent to Discord'
+						})
+					),
+					Effect.catchTag('DiscordError', (err) => {
+						const errorMessage = err.message;
+						console.error('DISCORD, failed to send message', errorMessage);
+						return db.logNotification({
+							ytVideoId: video.ytVideoId,
+							type: 'discord_video_live',
+							success: false,
+							message: `Failed to send message to Discord: ${errorMessage}`
+						});
+					})
+				);
+			}),
 
-	const message = flaggedCommentMessageTemplate({
-		commentUrl,
-		commentText: comment.text,
-		commentLikeCount: comment.likeCount,
-		commentAuthorName: comment.author,
-		commentLeftAt: comment.publishedAt.getTime()
-	});
+		sendFlaggedCommentToDiscord: (
+			comment: {
+				ytCommentId: string;
+				text: string;
+				likeCount: number;
+				author: string;
+				publishedAt: Date;
+			},
+			video: {
+				ytVideoId: string;
+			}
+		) =>
+			Effect.gen(function* () {
+				const commentUrl = `https://www.youtube.com/watch?v=${video.ytVideoId}&lc=${comment.ytCommentId}`;
+				const message = flaggedCommentMessageTemplate({
+					commentUrl,
+					commentText: comment.text,
+					commentLikeCount: comment.likeCount,
+					commentAuthorName: comment.author,
+					commentLeftAt: comment.publishedAt.getTime()
+				});
 
-	const result = await sendMessageToDiscord(message);
+				yield* sendMessage(message).pipe(
+					Effect.tap(() =>
+						db.logNotification({
+							ytVideoId: video.ytVideoId,
+							type: 'discord_flagged_comment',
+							success: true,
+							message: 'Flagged comment message sent to Discord',
+							commentId: comment.ytCommentId
+						})
+					),
+					Effect.catchTag('DiscordError', (err) => {
+						const errorMessage = err.message;
+						console.error('DISCORD, failed to send flagged comment message', errorMessage);
+						return db.logNotification({
+							ytVideoId: video.ytVideoId,
+							type: 'discord_flagged_comment',
+							success: false,
+							message: `Failed to send flagged comment message to Discord: ${errorMessage}`,
+							commentId: comment.ytCommentId
+						});
+					})
+				);
+			})
+	};
+});
 
-	if (result.isErr()) {
-		const errorMessage =
-			result.error instanceof Error ? result.error.message : String(result.error);
-		console.error('DISCORD, failed to send flagged comment message', errorMessage);
-		await DB_MUTATIONS.logNotification({
-			ytVideoId: video.ytVideoId,
-			type: 'discord_flagged_comment',
-			success: false,
-			message: `Failed to send flagged comment message to Discord: ${errorMessage}`,
-			commentId: comment.ytCommentId
-		});
-		return;
-	}
-
-	await DB_MUTATIONS.logNotification({
-		ytVideoId: video.ytVideoId,
-		type: 'discord_flagged_comment',
-		success: true,
-		message: 'Flagged comment message sent to Discord',
-		commentId: comment.ytCommentId
-	});
-};
+export class DiscordService extends Effect.Service<DiscordService>()('DiscordService', {
+	scoped: discordService
+}) {}

@@ -1,14 +1,14 @@
-import { DbService } from '@r8y/channel-sync';
-import { Effect } from 'effect';
+import { ChannelSyncService, DbService } from '@r8y/channel-sync';
+import { Effect, Fiber, pipe, Schedule } from 'effect';
 
 const program = Effect.gen(function* () {
+	const channelSync = yield* ChannelSyncService;
+
 	yield* Effect.log('starting bg worker');
-	const db = yield* DbService;
-
-	const channels = yield* db.getAllChannels();
-
-	yield* Effect.log(channels);
+	yield* channelSync.syncAllChannels();
 }).pipe(
+	Effect.provide(ChannelSyncService.Default),
+	// TODO: should probably wrap this in something so I'm not exposing the db service to the outside world
 	Effect.provide(DbService.Default),
 	Effect.matchCause({
 		onSuccess: () => {
@@ -17,59 +17,20 @@ const program = Effect.gen(function* () {
 		onFailure: (cause) => {
 			console.error('bg worker crashed', cause);
 		}
-	})
+	}),
+	Effect.repeat(Schedule.spaced('30 minutes'))
 );
 
-Effect.runPromise(program);
+const programFiber = Effect.runFork(program);
 
-// const main = async () => {
-// 	const start = performance.now();
-// 	const channels = await DB_QUERIES.getAllChannels();
-// 	if (channels.isErr()) {
-// 		console.error('LIVE CRAWLER CRASHED: Failed to get all channels', channels.error);
-// 		return;
-// 	}
+process.on('SIGINT', async () => {
+	console.log('SIGINT received');
+	await pipe(programFiber, Fiber.interrupt, Effect.runPromise);
+	process.exit(0);
+});
 
-// 	const channelsValue = channels.value;
-
-// 	const allRecentVideosResults = await Promise.allSettled(
-// 		channelsValue.map(async (channel) =>
-// 			getRecentVideosForChannel({ ytChannelId: channel.ytChannelId })
-// 		)
-// 	);
-
-// 	let successCount = 0;
-// 	let errorCount = 0;
-
-// 	for (const result of allRecentVideosResults) {
-// 		if (result.status === 'fulfilled' && result.value.isOk()) {
-// 			const recentVideos = result.value.value;
-// 			await Promise.allSettled(
-// 				recentVideos.map(async (video) => {
-// 					console.log(`Syncing video ${video.videoId} - ${video.title}`);
-// 					const syncVideoResult = await syncVideo({
-// 						ytVideoId: video.videoId
-// 					});
-// 					if (syncVideoResult.isOk()) {
-// 						successCount++;
-// 						console.log(`Synced video ${video.videoId} - ${video.title}`);
-// 					} else {
-// 						errorCount++;
-// 						console.error('LIVE CRAWLER CRASHED: Failed to sync video', syncVideoResult.error);
-// 					}
-// 				})
-// 			);
-// 		}
-// 	}
-
-// 	console.log(`LIVE CRAWLER COMPLETED: ${successCount} videos synced, ${errorCount} videos failed`);
-// 	console.log(`LIVE CRAWLER TOOK ${performance.now() - start}ms`);
-// };
-
-// const THIRTY_MINUTES_MS = 30 * 60 * 1000;
-
-// setInterval(() => {
-// 	main();
-// }, THIRTY_MINUTES_MS);
-
-// main();
+process.on('SIGTERM', async () => {
+	console.log('SIGTERM received');
+	await pipe(programFiber, Fiber.interrupt, Effect.runPromise);
+	process.exit(0);
+});
