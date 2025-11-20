@@ -1,5 +1,5 @@
 import { err, ok } from 'neverthrow';
-import { DB_QUERIES } from './db';
+import { DB_QUERIES } from './db-legacy';
 
 export const getRecentVideosForChannel = async (args: { ytChannelId: string }) => {
 	const channel = await DB_QUERIES.getChannel(args.ytChannelId);

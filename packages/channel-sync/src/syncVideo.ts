@@ -1,6 +1,6 @@
 import { err, ok } from 'neverthrow';
 import { getVideoComments, getVideoDetails } from './youtube/helpers';
-import { DB_MUTATIONS, DB_QUERIES } from './db';
+import { DB_MUTATIONS, DB_QUERIES } from './db-legacy';
 import { classifyComment, getSponsor } from './ai/helpers';
 import { sendVideoLiveToDiscord } from './notifications/discord';
 import { sendVideoLiveToTodoist } from './notifications/todoist';

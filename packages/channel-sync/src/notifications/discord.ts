@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import { ResultAsync, err } from 'neverthrow';
-import { DB_MUTATIONS } from '../db/mutations';
+import { DB_MUTATIONS } from '../db-legacy/mutations';
 
 const discordClient = new Client({
 	intents: [GatewayIntentBits.GuildMessages, GatewayIntentBits.Guilds]

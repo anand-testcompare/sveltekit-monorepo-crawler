@@ -1,6 +1,6 @@
 import { TodoistApi } from '@doist/todoist-api-typescript';
 import { ResultAsync } from 'neverthrow';
-import { DB_MUTATIONS } from '../db/mutations';
+import { DB_MUTATIONS } from '../db-legacy/mutations';
 
 const todoistApi = new TodoistApi(Bun.env.TODOIST_API_TOKEN!);
 
@@ -40,4 +40,3 @@ export const sendVideoLiveToTodoist = async (
 		message: 'Video live task added to Todoist'
 	});
 };
-
