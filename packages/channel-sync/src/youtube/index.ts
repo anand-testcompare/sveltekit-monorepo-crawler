@@ -107,37 +107,55 @@ const youtubeService = Effect.gen(function* () {
 
 		getVideosForChannel: (args: { ytChannelId: string; maxResults?: number }) =>
 			Effect.gen(function* () {
-				const { ytChannelId, maxResults: maxResultsArg } = args;
-				const maxResults = maxResultsArg || 50;
+				const playlists = yield* Effect.tryPromise({
+					try: () =>
+						youtube.channels.list({
+							part: ['contentDetails'],
+							id: [args.ytChannelId]
+						}),
+					catch: (err) =>
+						new YoutubeError(`Failed to get playlists for channel ${args.ytChannelId}`, {
+							cause: err
+						})
+				});
 
-				const videoIds: string[] = [];
+				const uploadsPlaylistId =
+					playlists.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+
+				if (!uploadsPlaylistId) {
+					return yield* Effect.fail(
+						new YoutubeError(`Could not find uploads playlist for channel ${args.ytChannelId}`)
+					);
+				}
+
+				yield* Effect.log(`Uploads playlist ID: ${uploadsPlaylistId}`);
+
+				let videoIds: string[] = [];
 				let nextPageToken: string | undefined;
+				const maxResults = args.maxResults || 50;
 
 				do {
-					const searchResponse = yield* Effect.tryPromise({
+					const playlistResponse = yield* Effect.tryPromise({
 						try: () =>
-							youtube.search.list({
-								part: ['id'],
-								channelId: ytChannelId,
-								type: ['video'],
-								order: 'date',
+							youtube.playlistItems.list({
+								part: ['contentDetails'],
+								playlistId: uploadsPlaylistId,
 								maxResults: 50,
 								pageToken: nextPageToken
 							}),
 						catch: (err) =>
-							new YoutubeError(`Failed to get videos for channel ${ytChannelId}`, { cause: err })
+							new YoutubeError(`Failed to get playlist items for playlist ${uploadsPlaylistId}`, {
+								cause: err
+							})
 					});
 
-					const searchResponseValue = searchResponse.data;
-
-					const items = searchResponseValue.items || [];
+					const items = playlistResponse.data.items || [];
 					for (const item of items) {
-						if (item.id?.videoId) {
-							videoIds.push(item.id.videoId);
+						if (item.contentDetails?.videoId) {
+							videoIds.push(item.contentDetails.videoId);
 						}
 					}
-
-					nextPageToken = searchResponseValue.nextPageToken || undefined;
+					nextPageToken = playlistResponse.data.nextPageToken || undefined;
 				} while (nextPageToken && videoIds.length < maxResults);
 
 				return videoIds;

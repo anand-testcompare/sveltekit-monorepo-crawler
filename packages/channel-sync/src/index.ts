@@ -225,10 +225,9 @@ const channelSyncService = Effect.gen(function* () {
 				return yield* Effect.fail(new SyncVideoError('Channel not found'));
 			}
 
-			// Fetch up to 300 videos from the channel
 			const videoIds = yield* youtube.getVideosForChannel({
 				ytChannelId: args.ytChannelId,
-				maxResults: 300
+				maxResults: 1000
 			});
 
 			yield* Console.log(`BACKFILL: Found ${videoIds.length} videos to backfill`);
