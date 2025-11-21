@@ -5,10 +5,9 @@
 	import ChannelFullDetails from '$lib/components/ChannelFullDetails.svelte';
 	import ChannelLastSevenVids from '$lib/components/ChannelLastSevenVids.svelte';
 	import ChannelAllSponsors from '$lib/components/ChannelAllSponsors.svelte';
-	import { page } from '$app/state';
 	import ChannelHeader from '$lib/components/ChannelHeader.svelte';
 
-	const channelId = $derived(page.params.channelId as string);
+	const { channelId }: { channelId: string } = $props();
 
 	const channel = $derived(await remoteGetChannelDetails(channelId));
 
@@ -16,7 +15,7 @@
 </script>
 
 <svelte:head>
-	<title>{channel.name}</title>
+	<title>{channel?.name}</title>
 </svelte:head>
 
 <div class="flex flex-col gap-4 p-8">

@@ -25,7 +25,7 @@
 	<div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 		{#each channels as channel}
 			<a
-				href="/app/channel/{channel.ytChannelId}"
+				href="/app/view/channel?channelId={channel.ytChannelId}"
 				class="block overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
 			>
 				<div class="p-6">

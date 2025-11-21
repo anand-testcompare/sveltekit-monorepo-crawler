@@ -66,7 +66,7 @@
 						{#each videos as video}
 							<tr class="hover:bg-muted/50">
 								<td class="px-6 py-4">
-									<a href="/app/channel/{channelId}/video/{video.ytVideoId}">
+									<a href="/app/view/video?videoId={video.ytVideoId}&channelId={channelId}">
 										<img
 											src={video.thumbnailUrl}
 											alt={video.title}
@@ -76,7 +76,7 @@
 								</td>
 								<td class="px-6 py-4">
 									<a
-										href="/app/channel/{channelId}/video/{video.ytVideoId}"
+										href="/app/view/video?videoId={video.ytVideoId}&channelId={channelId}"
 										class="max-w-md truncate text-sm font-medium text-card-foreground transition-colors hover:text-primary"
 									>
 										{video.title}
@@ -91,7 +91,8 @@
 								<td class="px-6 py-4 text-sm text-muted-foreground">
 									{#if video.sponsor}
 										<a
-											href="/app/channel/{channelId}/sponsor/{video.sponsor.sponsorId}"
+											href="/app/view/sponsor?sponsorId={video.sponsor
+												.sponsorId}&channelId={channelId}"
 											class="inline-flex items-center rounded-full px-3 py-1 font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground"
 										>
 											{video.sponsor.name}

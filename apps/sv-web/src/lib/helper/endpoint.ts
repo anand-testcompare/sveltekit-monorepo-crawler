@@ -1,20 +1,8 @@
 import { AuthService } from '$lib/auth';
 import { DbError, DbService } from '$lib/db';
+import { AppError } from '$lib/shared/errors';
 import { error } from '@sveltejs/kit';
 import { Effect, Cause, ManagedRuntime, Layer } from 'effect';
-import { TaggedError } from 'effect/Data';
-
-export class AppError extends TaggedError('AppError') {
-	body: App.Error;
-	status: number;
-	constructor(body: App.Error, status = 500) {
-		super();
-		this.message = body.message;
-		this.cause = body.cause;
-		this.body = body;
-		this.status = status;
-	}
-}
 
 const globalForRuntime = globalThis as unknown as {
 	client: ManagedRuntime.ManagedRuntime<DbService | AuthService, never> | undefined;
@@ -74,7 +62,7 @@ export const remoteRunner = async <A>(
 					_type: 'failure',
 					value: new AppError(
 						{
-							type: 'internal',
+							type: 'unknown',
 							message: 'An unexpected error occurred',
 							cause: cause.toString()
 						},

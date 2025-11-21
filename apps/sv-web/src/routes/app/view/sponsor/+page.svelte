@@ -3,11 +3,19 @@
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import SponsorStats from '$lib/components/SponsorStats.svelte';
 	import SponsorVideosTable from '$lib/components/SponsorVideosTable.svelte';
-	import { page } from '$app/state';
 	import ChannelHeader from '$lib/components/ChannelHeader.svelte';
+	import z from 'zod';
+	import { useSearchParams } from 'runed/kit';
 
-	const sponsorId = $derived(page.params.sponsorId as string);
-	const channelId = $derived(page.params.channelId as string);
+	const sponsorParamsSchema = z.object({
+		channelId: z.string().default(''),
+		sponsorId: z.string().default('')
+	});
+
+	const params = useSearchParams(sponsorParamsSchema);
+
+	const sponsorId = $derived(params.sponsorId);
+	const channelId = $derived(params.channelId);
 
 	const sponsor = $derived(await remoteGetSponsorDetails(sponsorId));
 	const channel = $derived(await remoteGetChannelDetails(channelId));

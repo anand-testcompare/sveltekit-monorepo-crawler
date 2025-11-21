@@ -1,7 +1,8 @@
 import { form, getRequestEvent, query } from '$app/server';
 import { AuthService } from '$lib/auth';
 import { DbService } from '$lib/db';
-import { AppError, remoteRunner } from '$lib/helper/endpoint';
+import { remoteRunner } from '$lib/helper/endpoint';
+import { AppError } from '$lib/shared/errors';
 import { Effect } from 'effect';
 import z from 'zod';
 
@@ -90,7 +91,7 @@ export const remoteGetChannelDetails = query(z.string(), async (ytChannelId) => 
 			const channel = yield* db.getChannel(ytChannelId);
 
 			if (!channel) {
-				yield* Effect.fail(new AppError({ message: 'Channel not found', type: 'db' }, 404));
+				return yield* Effect.fail(new AppError({ message: 'Channel not found', type: 'db' }, 404));
 			}
 
 			return yield* Effect.succeed(channel);

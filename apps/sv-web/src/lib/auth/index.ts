@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/private';
-import { AppError } from '$lib/helper/endpoint';
+import { AppError } from '$lib/shared/errors';
 import type { RequestEvent } from '@sveltejs/kit';
 import { Effect } from 'effect';
 

@@ -3,11 +3,19 @@
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb/index.js';
 	import VideoNotificationsTable from '$lib/components/VideoNotificationsTable.svelte';
 	import VideoCommentsTable from '$lib/components/VideoCommentsTable.svelte';
-	import { page } from '$app/state';
 	import ChannelHeader from '$lib/components/ChannelHeader.svelte';
+	import z from 'zod';
+	import { useSearchParams } from 'runed/kit';
 
-	const videoId = $derived(page.params.videoId as string);
-	const channelId = $derived(page.params.channelId as string);
+	const videoParamsSchema = z.object({
+		videoId: z.string().default(''),
+		channelId: z.string().default('')
+	});
+
+	const params = useSearchParams(videoParamsSchema);
+
+	const videoId = $derived(params.videoId);
+	const channelId = $derived(params.channelId);
 
 	const videoData = $derived(await remoteGetVideoDetails(videoId));
 	const channel = $derived(await remoteGetChannelDetails(channelId));
