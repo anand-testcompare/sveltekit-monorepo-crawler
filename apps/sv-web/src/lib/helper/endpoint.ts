@@ -30,6 +30,11 @@ const getRuntime = () => {
 	return globalForRuntime.client;
 };
 
+process.on('sveltekit:shutdown', async (reason) => {
+	console.log('sveltekit:shutdown', reason);
+	await getRuntime().dispose();
+});
+
 export const remoteRunner = async <A>(
 	effect: Effect.Effect<A, AppError | DbError, DbService | AuthService>
 ) => {
