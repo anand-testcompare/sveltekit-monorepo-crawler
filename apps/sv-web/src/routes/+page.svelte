@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { getAuthStore } from '$lib/auth/AuthStore.svelte.js';
+	import { getAuthStore } from '$lib/stores/AuthStore.svelte.js';
 	import RootLoader from '$lib/components/RootLoader.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Input } from '$lib/components/ui/input';
