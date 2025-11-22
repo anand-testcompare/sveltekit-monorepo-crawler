@@ -1,5 +1,20 @@
 <script lang="ts">
 	import { remoteGetChannelVideos } from '$lib/remote/channels.remote';
+	import { createRawSnippet } from 'svelte';
+	import {
+		renderComponent,
+		renderSnippet,
+		createSvelteTable,
+		FlexRender
+	} from '$lib/components/ui/data-table/index.js';
+	import DataTableColumnHeader from '$lib/components/ui/data-table/data-table-column-header.svelte';
+	import * as Table from '$lib/components/ui/table/index.js';
+	import {
+		getCoreRowModel,
+		getSortedRowModel,
+		type ColumnDef,
+		type SortingState
+	} from '@tanstack/table-core';
 
 	const { channelId }: { channelId: string } = $props();
 
@@ -15,13 +30,158 @@
 		return num.toString();
 	};
 
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString('en-US', {
+	const formatDate = (date: Date | string) => {
+		const d = new Date(date);
+		return d.toLocaleDateString('en-US', {
 			year: 'numeric',
 			month: 'short',
 			day: 'numeric'
 		});
 	};
+
+	type Video = {
+		ytVideoId: string;
+		title: string;
+		thumbnailUrl: string;
+		viewCount: number;
+		likeCount: number;
+		publishedAt: Date | string;
+		sponsor: {
+			name: string;
+			sponsorId: string;
+		} | null;
+	};
+
+	const columns: ColumnDef<Video>[] = [
+		{
+			accessorKey: 'thumbnailUrl',
+			header: 'Thumbnail',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ video: Video; channelId: string }]>((params) => {
+					const { video, channelId } = params();
+					return {
+						render: () =>
+							`<a href="/app/view/video?videoId=${video.ytVideoId}&channelId=${channelId}"><img src="${video.thumbnailUrl}" alt="${video.title}" class="h-12 w-20 rounded object-cover transition-opacity hover:opacity-80" /></a>`
+					};
+				});
+				return renderSnippet(snippet, { video: row.original, channelId });
+			}
+		},
+		{
+			accessorKey: 'title',
+			header: 'Title',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ video: Video; channelId: string }]>((params) => {
+					const { video, channelId } = params();
+					return {
+						render: () =>
+							`<a href="/app/view/video?videoId=${video.ytVideoId}&channelId=${channelId}" class="max-w-md truncate text-sm font-medium text-card-foreground transition-colors hover:text-primary block">${video.title}</a>`
+					};
+				});
+				return renderSnippet(snippet, { video: row.original, channelId });
+			}
+		},
+		{
+			accessorKey: 'viewCount',
+			header: ({ column }) =>
+				renderComponent(DataTableColumnHeader, {
+					title: 'Views',
+					isSorted: column.getIsSorted(),
+					onclick: column.getToggleSortingHandler()
+				}),
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ views: number }]>((params) => {
+					const { views } = params();
+					return {
+						render: () => `<div class="text-sm text-muted-foreground">${formatNumber(views)}</div>`
+					};
+				});
+				return renderSnippet(snippet, { views: row.original.viewCount });
+			}
+		},
+		{
+			accessorKey: 'likeCount',
+			header: ({ column }) =>
+				renderComponent(DataTableColumnHeader, {
+					title: 'Likes',
+					isSorted: column.getIsSorted(),
+					onclick: column.getToggleSortingHandler()
+				}),
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ likes: number }]>((params) => {
+					const { likes } = params();
+					return {
+						render: () => `<div class="text-sm text-muted-foreground">${formatNumber(likes)}</div>`
+					};
+				});
+				return renderSnippet(snippet, { likes: row.original.likeCount });
+			}
+		},
+		{
+			accessorKey: 'sponsor',
+			header: 'Sponsor',
+			cell: ({ row }) => {
+				if (!row.original.sponsor) {
+					const noneSnippet = createRawSnippet(() => ({
+						render: () => `<div class="text-sm text-muted-foreground">None</div>`
+					}));
+					return renderSnippet(noneSnippet, {});
+				}
+				const snippet = createRawSnippet<
+					[{ sponsor: NonNullable<Video['sponsor']>; channelId: string }]
+				>((params) => {
+					const { sponsor, channelId } = params();
+					return {
+						render: () =>
+							`<a href="/app/view/sponsor?sponsorId=${sponsor.sponsorId}&channelId=${channelId}" class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground">${sponsor.name}</a>`
+					};
+				});
+				return renderSnippet(snippet, { sponsor: row.original.sponsor, channelId });
+			}
+		},
+		{
+			accessorKey: 'publishedAt',
+			header: ({ column }) =>
+				renderComponent(DataTableColumnHeader, {
+					title: 'Published',
+					isSorted: column.getIsSorted(),
+					onclick: column.getToggleSortingHandler()
+				}),
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ date: Date | string }]>((params) => {
+					const { date } = params();
+					return {
+						render: () => `<div class="text-sm text-muted-foreground">${formatDate(date)}</div>`
+					};
+				});
+				return renderSnippet(snippet, { date: row.original.publishedAt });
+			},
+			sortingFn: 'datetime'
+		}
+	];
+
+	let sorting = $state<SortingState>([]);
+
+	const table = createSvelteTable({
+		get data() {
+			return videos;
+		},
+		columns,
+		state: {
+			get sorting() {
+				return sorting;
+			}
+		},
+		onSortingChange: (updater) => {
+			if (typeof updater === 'function') {
+				sorting = updater(sorting);
+			} else {
+				sorting = updater;
+			}
+		},
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel()
+	});
 </script>
 
 <div>
@@ -33,81 +193,41 @@
 	{:else}
 		<div class="max-h-[600px] overflow-hidden rounded-lg border border-border bg-card">
 			<div class="max-h-[600px] overflow-y-auto">
-				<table class="w-full">
-					<thead class="sticky top-0 z-10 border-b border-border bg-muted">
-						<tr>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Thumbnail</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Title</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Views</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Likes</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Sponsor</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Published</th
-							>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-border">
-						{#each videos as video}
-							<tr class="hover:bg-muted/50">
-								<td class="px-6 py-4">
-									<a href="/app/view/video?videoId={video.ytVideoId}&channelId={channelId}">
-										<img
-											src={video.thumbnailUrl}
-											alt={video.title}
-											class="h-12 w-20 rounded object-cover transition-opacity hover:opacity-80"
-										/>
-									</a>
-								</td>
-								<td class="px-6 py-4">
-									<a
-										href="/app/view/video?videoId={video.ytVideoId}&channelId={channelId}"
-										class="max-w-md truncate text-sm font-medium text-card-foreground transition-colors hover:text-primary"
-									>
-										{video.title}
-									</a>
-								</td>
-								<td class="px-6 py-4 text-sm text-muted-foreground"
-									>{formatNumber(video.viewCount)}</td
-								>
-								<td class="px-6 py-4 text-sm text-muted-foreground"
-									>{formatNumber(video.likeCount)}</td
-								>
-								<td class="px-6 py-4 text-sm text-muted-foreground">
-									{#if video.sponsor}
-										<a
-											href="/app/view/sponsor?sponsorId={video.sponsor
-												.sponsorId}&channelId={channelId}"
-											class="inline-flex items-center rounded-full px-3 py-1 font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-										>
-											{video.sponsor.name}
-										</a>
-									{:else}
-										None
-									{/if}
-								</td>
-								<td class="px-6 py-4 text-sm text-muted-foreground"
-									>{formatDate(video.publishedAt)}</td
-								>
-							</tr>
+				<Table.Root>
+					<Table.Header class="sticky top-0 z-10 bg-muted">
+						{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+							<Table.Row>
+								{#each headerGroup.headers as header (header.id)}
+									<Table.Head>
+										{#if !header.isPlaceholder}
+											<FlexRender
+												content={header.column.columnDef.header}
+												context={header.getContext()}
+											/>
+										{/if}
+									</Table.Head>
+								{/each}
+							</Table.Row>
 						{/each}
-					</tbody>
-				</table>
+					</Table.Header>
+					<Table.Body>
+						{#each table.getRowModel().rows as row (row.id)}
+							<Table.Row data-state={row.getIsSelected() && 'selected'}>
+								{#each row.getVisibleCells() as cell (cell.id)}
+									<Table.Cell>
+										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+									</Table.Cell>
+								{/each}
+							</Table.Row>
+						{:else}
+							<Table.Row>
+								<Table.Cell colspan={columns.length} class="h-24 text-center"
+									>No results.</Table.Cell
+								>
+							</Table.Row>
+						{/each}
+					</Table.Body>
+				</Table.Root>
 			</div>
 		</div>
 	{/if}
