@@ -71,6 +71,7 @@ export const remoteRunner = async <A>(
 				if (failures.length > 0) {
 					failures.forEach((failure) => {
 						console.error(failure.toString());
+						console.error(failure.cause);
 					});
 					const first = failures[0];
 					if (first) {

@@ -735,8 +735,9 @@ const dbService = Effect.gen(function* () {
 				};
 			}),
 
-		getChannelVideos: (ytChannelId: string) =>
+		getChannelVideos: (args: { ytChannelId: string; limit: number }) =>
 			Effect.gen(function* () {
+				const { ytChannelId, limit } = args;
 				const videos = yield* Effect.tryPromise({
 					try: () =>
 						drizzle
@@ -745,6 +746,7 @@ const dbService = Effect.gen(function* () {
 								sponsor: DB_SCHEMA.sponsors
 							})
 							.from(DB_SCHEMA.videos)
+							.limit(limit)
 							.leftJoin(
 								DB_SCHEMA.sponsorToVideos,
 								eq(DB_SCHEMA.sponsorToVideos.ytVideoId, DB_SCHEMA.videos.ytVideoId)
@@ -754,8 +756,7 @@ const dbService = Effect.gen(function* () {
 								eq(DB_SCHEMA.sponsors.sponsorId, DB_SCHEMA.sponsorToVideos.sponsorId)
 							)
 							.where(eq(DB_SCHEMA.videos.ytChannelId, ytChannelId))
-							.orderBy(desc(DB_SCHEMA.videos.publishedAt))
-							.limit(50),
+							.orderBy(desc(DB_SCHEMA.videos.publishedAt)),
 					catch: (err) =>
 						new DbError('Failed to get channel videos', {
 							cause: err

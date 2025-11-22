@@ -103,7 +103,11 @@ export const remoteGetChannelVideos = query(z.string(), async (ytChannelId) => {
 			const event = yield* Effect.sync(() => getRequestEvent());
 			yield* auth.checkAuthAndFail(event);
 
-			const videos = yield* db.getChannelVideos(ytChannelId);
+			const videos = yield* db.getChannelVideos({
+				ytChannelId,
+				limit: 20
+			});
+
 			return yield* Effect.succeed(videos);
 		})
 	);

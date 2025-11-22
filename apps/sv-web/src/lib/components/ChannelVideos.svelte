@@ -25,7 +25,7 @@
 </script>
 
 <div>
-	<h2 class="mb-4 text-xl font-semibold text-foreground">Recent Videos</h2>
+	<h2 class="mb-4 text-xl font-semibold text-foreground">Last 20 Videos</h2>
 	{#if videos.length === 0}
 		<div class="rounded-lg border border-border bg-muted p-8">
 			<p class="text-center text-muted-foreground">No videos found</p>
