@@ -23,5 +23,8 @@
 	"workspaces": [
 		"apps/*",
 		"packages/*"
-	]
+	],
+	"dependencies": {
+		"@typescript/native-preview": "^7.0.0-dev.20251123.1"
+	}
 }
