@@ -175,8 +175,7 @@ export const remoteSearchVideosAndSponsors = query(
 
 				if (!args.searchQuery || !args.channelId) {
 					return {
-						videos: [],
-						sponsors: []
+						results: []
 					};
 				}
 

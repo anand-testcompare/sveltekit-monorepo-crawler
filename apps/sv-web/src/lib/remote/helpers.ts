@@ -3,7 +3,6 @@ import { error } from '@sveltejs/kit';
 import { Effect, Cause, ManagedRuntime, Layer } from 'effect';
 import { AuthError, AuthService } from '$lib/services/auth';
 import { TaggedError } from 'effect/Data';
-import { dev } from '$app/environment';
 
 export class AppError extends TaggedError('AppError') {
 	status: number;
@@ -17,23 +16,12 @@ export class AppError extends TaggedError('AppError') {
 	}
 }
 
-const globalForRuntime = globalThis as unknown as {
-	client: ManagedRuntime.ManagedRuntime<DbService | AuthService, never> | undefined;
-};
+const runtime = ManagedRuntime.make(Layer.mergeAll(DbService.Default, AuthService.Default));
 
-const getRuntime = () => {
-	if (!globalForRuntime.client) {
-		globalForRuntime.client = ManagedRuntime.make(
-			Layer.mergeAll(DbService.Default, AuthService.Default)
-		);
-	}
-
-	return globalForRuntime.client;
-};
-
-process.on('sveltekit:shutdown', async (reason) => {
+process.on('SIGTERM', async (reason) => {
 	console.log('sveltekit:shutdown', reason);
-	await getRuntime().dispose();
+	await runtime.dispose();
+	process.exit(0);
 });
 
 export const remoteRunner = async <A>(
@@ -98,7 +86,7 @@ export const remoteRunner = async <A>(
 				};
 			}
 		}),
-		getRuntime().runPromise
+		runtime.runPromise
 	);
 
 	if (result._type === 'failure') {
