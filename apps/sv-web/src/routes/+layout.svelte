@@ -15,6 +15,6 @@
 </svelte:head>
 
 <ModeWatcher />
-<div class="flex min-h-screen flex-col items-center justify-between">
+<div class="flex flex-col items-center justify-between">
 	{@render children?.()}
 </div>

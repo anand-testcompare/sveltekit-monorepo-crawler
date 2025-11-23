@@ -13,13 +13,13 @@
 	> = $props();
 </script>
 
-<button size="sm" {...restProps} class="flex w-16 flex-row items-center justify-between gap-2">
+<button size="sm" {...restProps} class="flex flex-row items-center justify-between gap-2">
 	<span>
 		{title}
 	</span>
 	{#if isSorted === 'asc'}
-		<ArrowUpIcon />
+		<ArrowUpIcon class="h-4 w-4" />
 	{:else if isSorted === 'desc'}
-		<ArrowDownIcon />
+		<ArrowDownIcon class="h-4 w-4" />
 	{/if}
 </button>

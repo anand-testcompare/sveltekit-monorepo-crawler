@@ -12,7 +12,7 @@
 	const authStore = getAuthStore();
 </script>
 
-<div class="flex h-screen w-full flex-col">
+<div class="flex w-full flex-col">
 	{#if authStore.isAuthenticated}
 		<nav
 			class="flex items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-1.5"
@@ -53,8 +53,6 @@
 		{#snippet failed(err, retryFn)}
 			<AppError {err} {retryFn} />
 		{/snippet}
-		<main class="h-full w-full overflow-auto">
-			{@render children()}
-		</main>
+		{@render children()}
 	</svelte:boundary>
 </div>

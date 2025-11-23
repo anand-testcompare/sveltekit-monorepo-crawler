@@ -31,7 +31,9 @@
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app/view/channel?channelId={channelId}">{channel.name}</Breadcrumb.Link>
+					<Breadcrumb.Link href="/app/view/channel?channelId={channelId}"
+						>{channel.name}</Breadcrumb.Link
+					>
 				</Breadcrumb.Item>
 				<Breadcrumb.Separator />
 				<Breadcrumb.Item>
@@ -43,9 +45,13 @@
 	<div class="mb-8 flex items-center justify-between">
 		<div>
 			<h1 class="text-3xl font-bold text-foreground">{sponsor.sponsor.name}</h1>
-			<p class="mt-2 text-sm text-muted-foreground">
-				Sponsor Key: {sponsor.sponsor.sponsorKey}
-			</p>
+			<a
+				class="mt-2 text-sm text-muted-foreground"
+				href={sponsor.sponsor.sponsorKey}
+				target="_blank"
+			>
+				{sponsor.sponsor.sponsorKey}
+			</a>
 		</div>
 	</div>
 

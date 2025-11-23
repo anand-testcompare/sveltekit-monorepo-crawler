@@ -103,7 +103,10 @@ const channelSyncService = Effect.gen(function* () {
 				);
 			}
 
-			const comments = yield* youtube.getVideoComments({ ytVideoId: args.ytVideoId });
+			const comments = yield* youtube.getVideoComments({
+				ytVideoId: args.ytVideoId,
+				maxResults: 50
+			});
 
 			yield* db.bulkUpsertComments({
 				ytVideoId: args.ytVideoId,

@@ -39,7 +39,7 @@
 	};
 </script>
 
-<div class="flex flex-col gap-4 p-8">
+<div class="flex flex-col gap-4 p-8 pb-24">
 	<ChannelHeader {channelId} />
 	<div class="mb-6">
 		<Breadcrumb.Root>
@@ -62,7 +62,11 @@
 	</div>
 	<div class="mb-8 flex items-center justify-between">
 		<div>
-			<h1 class="text-3xl font-bold text-foreground">{videoData.video.title}</h1>
+			<a
+				class="text-3xl font-bold text-foreground"
+				href="https://www.youtube.com/watch?v={videoData.video.ytVideoId}"
+				target="_blank">{videoData.video.title}</a
+			>
 			<p class="mt-2 text-sm text-muted-foreground">
 				Published: {formatDate(videoData.video.publishedAt)}
 			</p>
