@@ -19,17 +19,13 @@
 	const channelId = $derived(params.channelId);
 
 	const searchResults = $derived(
-		channelId && value
-			? await remoteSearchVideosAndSponsors({
-					channelId: channelId,
-					searchQuery: value
-				})
-			: null
+		await remoteSearchVideosAndSponsors({
+			channelId: channelId,
+			searchQuery: value
+		})
 	);
 
-	const results = $derived(searchResults?.results ?? []);
-
-	$inspect(results);
+	const results = $derived(searchResults.results);
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
