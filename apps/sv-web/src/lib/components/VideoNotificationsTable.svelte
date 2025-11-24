@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { Badge } from '$lib/components/ui/badge/index.js';
+	import * as Table from '$lib/components/ui/table/index.js';
+	import { formatRelativeTime } from '$lib/utils';
+	import { Bell } from '@lucide/svelte';
 
 	const {
 		videoData
@@ -9,21 +12,6 @@
 		>;
 	} = $props();
 
-	const formatRelativeTime = (date: Date) => {
-		const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-
-		if (seconds < 60) return 'just now';
-		if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-		if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-		if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
-
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	};
-
 	const getNotificationTypeLabel = (type: string) => {
 		return type
 			.split('_')
@@ -32,62 +20,82 @@
 	};
 </script>
 
-<div>
-	<h2 class="mb-4 text-xl font-semibold text-foreground">Sent Notifications</h2>
+<div class="space-y-4">
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-3">
+			<h2 class="text-lg font-semibold text-foreground">Notifications</h2>
+			<Badge variant="secondary">{videoData.notifications?.length ?? 0}</Badge>
+		</div>
+	</div>
 	{#if !videoData.notifications || videoData.notifications.length === 0}
-		<div class="rounded-lg border border-border bg-muted p-8">
-			<p class="text-center text-muted-foreground">No notifications found</p>
+		<div
+			class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 p-8"
+		>
+			<div class="rounded-full bg-muted p-3">
+				<Bell class="h-5 w-5 text-muted-foreground" />
+			</div>
+			<p class="mt-3 text-sm text-muted-foreground">No notifications sent for this video</p>
 		</div>
 	{:else}
-		<div class="overflow-hidden rounded-lg border border-border bg-card">
-			<table class="w-full">
-				<thead class="border-b border-border bg-muted">
-					<tr>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+		<div class="overflow-hidden rounded-xl border border-border">
+			<Table.Root>
+				<Table.Header class="bg-muted/80">
+					<Table.Row class="hover:bg-transparent">
+						<Table.Head
+							class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+							>Type</Table.Head
 						>
-							Type
-						</th>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+						<Table.Head
+							class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+							>Status</Table.Head
 						>
-							Status
-						</th>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+						<Table.Head
+							class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+							>Message</Table.Head
 						>
-							Message
-						</th>
-						<th
-							class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
+						<Table.Head
+							class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+							>Time</Table.Head
 						>
-							Time
-						</th>
-					</tr>
-				</thead>
-				<tbody class="divide-y divide-border">
+					</Table.Row>
+				</Table.Header>
+				<Table.Body>
 					{#each videoData.notifications as notification}
-						<tr class="hover:bg-muted/50">
-							<td class="px-6 py-4">
-								<Badge variant="secondary">
+						<Table.Row>
+							<Table.Cell class="py-3">
+								<span
+									class="inline-flex items-center rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground"
+								>
 									{getNotificationTypeLabel(notification.type)}
-								</Badge>
-							</td>
-							<td class="px-6 py-4">
-								<Badge variant={notification.success ? 'default' : 'destructive'}>
-									{notification.success ? 'Success' : 'Failed'}
-								</Badge>
-							</td>
-							<td class="px-6 py-4">
-								<p class="max-w-md text-sm text-card-foreground">{notification.message}</p>
-							</td>
-							<td class="px-6 py-4 text-sm text-muted-foreground">
-								{formatRelativeTime(notification.createdAt)}
-							</td>
-						</tr>
+								</span>
+							</Table.Cell>
+							<Table.Cell class="py-3">
+								{#if notification.success}
+									<span
+										class="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+										>Success</span
+									>
+								{:else}
+									<span
+										class="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive"
+										>Failed</span
+									>
+								{/if}
+							</Table.Cell>
+							<Table.Cell class="py-3">
+								<span class="block max-w-md truncate text-sm text-foreground"
+									>{notification.message}</span
+								>
+							</Table.Cell>
+							<Table.Cell class="py-3">
+								<span class="text-sm text-muted-foreground"
+									>{formatRelativeTime(notification.createdAt)}</span
+								>
+							</Table.Cell>
+						</Table.Row>
 					{/each}
-				</tbody>
-			</table>
+				</Table.Body>
+			</Table.Root>
 		</div>
 	{/if}
 </div>

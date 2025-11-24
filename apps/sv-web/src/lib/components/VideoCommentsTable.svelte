@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { Pencil, DollarSign, CircleHelp } from '@lucide/svelte';
+	import { Pencil, DollarSign, MessageSquare } from '@lucide/svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { createRawSnippet } from 'svelte';
 	import {
 		renderComponent,
@@ -19,6 +20,7 @@
 		type SortingState,
 		type ColumnFiltersState
 	} from '@tanstack/table-core';
+	import { formatNumber, formatDate } from '$lib/utils';
 
 	const {
 		videoData
@@ -46,37 +48,19 @@
 		});
 	});
 
-	const formatNumber = (num: number) => {
-		if (num >= 1000000) {
-			return (num / 1000000).toFixed(1) + 'M';
-		}
-		if (num >= 1000) {
-			return (num / 1000).toFixed(1) + 'K';
-		}
-		return num.toString();
-	};
-
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	};
-
 	type Comments = ColumnDef<(typeof videoData.comments)[number]>[];
 
 	const columns: Comments = [
 		{
 			accessorKey: 'author',
 			header: 'Author',
-			size: 120,
+			size: 140,
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ author: string }]>((params) => {
 					const { author } = params();
 					return {
 						render: () =>
-							`<div class="text-sm font-medium text-card-foreground truncate">${author}</div>`
+							`<span class="font-medium text-foreground truncate block">${author}</span>`
 					};
 				});
 				return renderSnippet(snippet, { author: row.original.author });
@@ -85,16 +69,22 @@
 		{
 			accessorKey: 'text',
 			header: 'Comment',
-			size: 300,
+			size: 350,
 			cell: ({ row }) => {
-				const snippet = createRawSnippet<[{ text: string }]>((params) => {
-					const { text } = params();
-					return {
-						render: () =>
-							`<a href="https://www.youtube.com/watch?v=${videoData.video.ytVideoId}&lc=${row.original.ytCommentId}" target="_blank" class="break-words text-sm text-card-foreground whitespace-normal">${text}</a>`
-					};
+				const snippet = createRawSnippet<[{ text: string; videoId: string; commentId: string }]>(
+					(params) => {
+						const { text, videoId, commentId } = params();
+						return {
+							render: () =>
+								`<a href="https://www.youtube.com/watch?v=${videoId}&lc=${commentId}" target="_blank" class="text-sm text-foreground hover:text-primary transition-colors line-clamp-2">${text}</a>`
+						};
+					}
+				);
+				return renderSnippet(snippet, {
+					text: row.original.text,
+					videoId: videoData.video.ytVideoId,
+					commentId: row.original.ytCommentId
 				});
-				return renderSnippet(snippet, { text: row.original.text });
 			}
 		},
 		{
@@ -110,7 +100,8 @@
 				const snippet = createRawSnippet<[{ likes: number }]>((params) => {
 					const { likes } = params();
 					return {
-						render: () => `<div class="text-sm text-muted-foreground">${formatNumber(likes)}</div>`
+						render: () =>
+							`<span class="tabular-nums text-muted-foreground">${formatNumber(likes)}</span>`
 					};
 				});
 				return renderSnippet(snippet, { likes: row.original.likeCount });
@@ -124,13 +115,13 @@
 					isSorted: column.getIsSorted(),
 					onclick: column.getToggleSortingHandler()
 				}),
-			size: 90,
+			size: 80,
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ replies: number }]>((params) => {
 					const { replies } = params();
 					return {
 						render: () =>
-							`<div class="text-sm text-muted-foreground">${formatNumber(replies)}</div>`
+							`<span class="tabular-nums text-muted-foreground">${formatNumber(replies)}</span>`
 					};
 				});
 				return renderSnippet(snippet, { replies: row.original.replyCount });
@@ -140,16 +131,16 @@
 			accessorKey: 'publishedAt',
 			header: ({ column }) =>
 				renderComponent(DataTableColumnHeader, {
-					title: 'Published',
+					title: 'Date',
 					isSorted: column.getIsSorted(),
 					onclick: column.getToggleSortingHandler()
 				}),
-			size: 110,
+			size: 100,
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ date: Date }]>((params) => {
 					const { date } = params();
 					return {
-						render: () => `<div class="text-sm text-muted-foreground">${formatDate(date)}</div>`
+						render: () => `<span class="text-muted-foreground text-sm">${formatDate(date)}</span>`
 					};
 				});
 				return renderSnippet(snippet, { date: row.original.publishedAt });
@@ -158,43 +149,40 @@
 		},
 		{
 			accessorKey: 'flags',
-			header: 'Flags',
-			size: 180,
+			header: 'Tags',
+			size: 160,
 			cell: ({ row }) => {
-				const comment = row.original;
 				const snippet = createRawSnippet(() => {
 					const comment = row.original;
 					const badges: string[] = [];
 					if (comment.isEditingMistake) {
 						badges.push(
-							'<span class="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>Edit</span>'
+							'<span class="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">Edit</span>'
 						);
 					}
 					if (comment.isSponsorMention) {
 						badges.push(
-							'<span class="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>Sponsor</span>'
+							'<span class="inline-flex items-center gap-1 rounded-md bg-green-500/10 px-1.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">Sponsor</span>'
 						);
 					}
 					if (comment.isQuestion) {
 						badges.push(
-							'<span class="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v.01M12 12a1 1 0 0 0-1-1 1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-2a1 1 0 0 0-1-1z"></path></svg>Question</span>'
+							'<span class="inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-1.5 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">Question</span>'
 						);
 					}
 					if (comment.isPositiveComment) {
 						badges.push(
-							'<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium bg-primary text-primary-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.08c4.993 0 9-1.806 9-4.02V12c0 4.418-4.03 8-9 8s-9-3.582-9-8V12c0 2.214 4.007 4.02 9 4.02z"></path><ellipse cx="12" cy="12" rx="9" ry="4"></ellipse><path d="M12 4v8"></path></svg>Positive</span>'
+							'<span class="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">Positive</span>'
 						);
 					}
-					if (comment.isProcessed) {
-						badges.push(
-							'<span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium bg-secondary text-secondary-foreground"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Processed</span>'
-						);
+					if (badges.length === 0) {
+						return { render: () => `<span class="text-muted-foreground/50">—</span>` };
 					}
 					return {
 						render: () => `<div class="flex flex-wrap gap-1">${badges.join('')}</div>`
 					};
 				});
-				return renderSnippet(snippet, { comment });
+				return renderSnippet(snippet, {});
 			}
 		}
 	];
@@ -233,96 +221,126 @@
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: getFilteredRowModel()
 	});
+
+	const activeFiltersCount = $derived(
+		[showQuestions, showSponsorMentions, showEditingMistakes].filter(Boolean).length
+	);
 </script>
 
-<div class="h-96">
-	<div class="mb-4 flex items-center justify-between">
-		<h2 class="text-xl font-semibold text-foreground">
-			Comments ({videoData.comments?.length ?? 0})
-		</h2>
+<div class="space-y-4">
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-3">
+			<h2 class="text-lg font-semibold text-foreground">Comments</h2>
+			<Badge variant="secondary">{videoData.comments?.length ?? 0}</Badge>
+			{#if activeFiltersCount > 0}
+				<Badge variant="outline" class="text-primary">{filteredComments.length} shown</Badge>
+			{/if}
+		</div>
 	</div>
 	{#if !videoData.comments || videoData.comments.length === 0}
-		<div class="rounded-lg border border-border bg-muted p-8">
-			<p class="text-center text-muted-foreground">No comments found</p>
+		<div
+			class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 p-12"
+		>
+			<div class="rounded-full bg-muted p-3">
+				<MessageSquare class="h-6 w-6 text-muted-foreground" />
+			</div>
+			<p class="mt-3 text-sm text-muted-foreground">No comments found for this video</p>
 		</div>
 	{:else}
-		<div class="mb-4 flex flex-row justify-between">
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 			<Input
-				placeholder="Search comments by title..."
+				placeholder="Search comments..."
 				value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
 				oninput={(e) => table.getColumn('text')?.setFilterValue(e.currentTarget.value)}
-				onchange={(e) => table.getColumn('text')?.setFilterValue(e.currentTarget.value)}
 				class="max-w-sm"
 			/>
 
-			<div class="flex items-center gap-2">
+			<div class="flex flex-wrap items-center gap-2">
+				<span class="mr-1 text-xs text-muted-foreground">Filter:</span>
 				<Button
 					variant={showQuestions ? 'default' : 'outline'}
 					size="sm"
 					onclick={() => (showQuestions = !showQuestions)}
+					class="h-8"
 				>
-					<CircleHelp class="h-4 w-4" />
+					<span class="text-sm font-bold">?</span>
 					Questions
 				</Button>
 				<Button
 					variant={showSponsorMentions ? 'default' : 'outline'}
 					size="sm"
 					onclick={() => (showSponsorMentions = !showSponsorMentions)}
+					class="h-8"
 				>
-					<DollarSign class="h-4 w-4" />
-					Sponsor Mentions
+					<DollarSign class="h-3.5 w-3.5" />
+					Sponsors
 				</Button>
 				<Button
 					variant={showEditingMistakes ? 'default' : 'outline'}
 					size="sm"
 					onclick={() => (showEditingMistakes = !showEditingMistakes)}
+					class="h-8"
 				>
-					<Pencil class="h-4 w-4" />
-					Edit Mistakes
+					<Pencil class="h-3.5 w-3.5" />
+					Edits
 				</Button>
 			</div>
 		</div>
 		{#if table.getRowModel().rows.length === 0}
-			<div class="rounded-lg border border-border bg-muted p-8">
-				<p class="text-center text-muted-foreground">No comments match the search</p>
+			<div
+				class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 p-12"
+			>
+				<p class="text-sm text-muted-foreground">No comments match your filters</p>
+				<Button
+					variant="ghost"
+					size="sm"
+					class="mt-2"
+					onclick={() => {
+						showQuestions = false;
+						showSponsorMentions = false;
+						showEditingMistakes = false;
+						table.getColumn('text')?.setFilterValue('');
+					}}
+				>
+					Clear filters
+				</Button>
 			</div>
 		{:else}
-			<div class="max-h-[600px] overflow-hidden rounded-lg border border-border bg-card">
+			<div class="overflow-hidden rounded-xl border border-border">
 				<div class="max-h-[600px] overflow-y-auto">
 					<Table.Root class="w-full table-fixed">
-						<Table.Header class="sticky top-0 z-10 bg-muted">
-							{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-								<Table.Row>
-									{#each headerGroup.headers as header (header.id)}
-										<Table.Head style="width: {header.getSize() ?? 100}px">
-											{#if !header.isPlaceholder}
-												<FlexRender
-													content={header.column.columnDef.header}
-													context={header.getContext()}
-												/>
-											{/if}
-										</Table.Head>
-									{/each}
-								</Table.Row>
-							{/each}
+						<Table.Header class="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
+							{#key sorting}
+								{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+									<Table.Row class="hover:bg-transparent">
+										{#each headerGroup.headers as header (header.id)}
+											<Table.Head
+												style="width: {header.getSize()}px"
+												class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+											>
+												{#if !header.isPlaceholder}
+													<FlexRender
+														content={header.column.columnDef.header}
+														context={header.getContext()}
+													/>
+												{/if}
+											</Table.Head>
+										{/each}
+									</Table.Row>
+								{/each}
+							{/key}
 						</Table.Header>
 						<Table.Body>
 							{#each table.getRowModel().rows as row (row.id)}
-								<Table.Row data-state={row.getIsSelected() && 'selected'}>
+								<Table.Row class="group">
 									{#each row.getVisibleCells() as cell (cell.id)}
-										<Table.Cell style="width: {cell.column.getSize() ?? 100}px">
+										<Table.Cell style="width: {cell.column.getSize()}px" class="py-3">
 											<FlexRender
 												content={cell.column.columnDef.cell}
 												context={cell.getContext()}
 											/>
 										</Table.Cell>
 									{/each}
-								</Table.Row>
-							{:else}
-								<Table.Row>
-									<Table.Cell colspan={columns.length} class="h-24 text-center"
-										>No results.</Table.Cell
-									>
 								</Table.Row>
 							{/each}
 						</Table.Body>

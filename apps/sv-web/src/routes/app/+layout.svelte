@@ -13,10 +13,10 @@
 	const authStore = getAuthStore();
 </script>
 
-<div class="flex w-full flex-col">
+<div class="flex min-h-screen w-full flex-col">
 	{#if authStore.isAuthenticated}
 		<nav
-			class="flex items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-1.5"
+			class="sticky top-0 z-50 flex items-center justify-between border-b border-sidebar-border bg-sidebar/95 px-4 py-1.5 backdrop-blur-sm"
 		>
 			<Button href="/app" variant="ghost">All Channels</Button>
 			<div class="flex flex-row items-center justify-end gap-2">
@@ -38,7 +38,7 @@
 		</nav>
 	{:else}
 		<nav
-			class="flex items-center justify-between border-b border-sidebar-border bg-sidebar px-4 py-1.5"
+			class="sticky top-0 z-50 flex items-center justify-between border-b border-sidebar-border bg-sidebar/95 px-4 py-1.5 backdrop-blur-sm"
 		>
 			<Button href="/app" variant="ghost">Home</Button>
 			<div class="flex gap-2">
@@ -53,13 +53,15 @@
 		</nav>
 	{/if}
 
-	<svelte:boundary>
-		{#snippet pending()}
-			<RootLoader />
-		{/snippet}
-		{#snippet failed(err, retryFn)}
-			<AppError {err} {retryFn} />
-		{/snippet}
-		{@render children()}
-	</svelte:boundary>
+	<main class="mx-auto w-full max-w-7xl flex-1">
+		<svelte:boundary>
+			{#snippet pending()}
+				<RootLoader />
+			{/snippet}
+			{#snippet failed(err, retryFn)}
+				<AppError {err} {retryFn} />
+			{/snippet}
+			{@render children()}
+		</svelte:boundary>
+	</main>
 </div>

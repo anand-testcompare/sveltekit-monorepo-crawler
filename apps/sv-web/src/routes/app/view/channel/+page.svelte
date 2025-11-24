@@ -27,9 +27,10 @@
 	<title>{channel?.name}</title>
 </svelte:head>
 
-<div class="flex flex-col gap-4 p-8">
+<div class="flex flex-col gap-6 p-8">
 	<ChannelHeader {channelId} />
-	<div class="mb-6 flex w-full items-center justify-between">
+
+	<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 		<Breadcrumb.Root>
 			<Breadcrumb.List>
 				<Breadcrumb.Item>
@@ -44,18 +45,22 @@
 
 		<Tabs.Root value={'details'}>
 			<Tabs.List>
-				<Tabs.Trigger value="details" onclick={() => (tab = 'details')}>Details</Tabs.Trigger>
-				<Tabs.Trigger value="recent" onclick={() => (tab = 'recent')}>Recent Videos</Tabs.Trigger>
+				<Tabs.Trigger value="details" onclick={() => (tab = 'details')}>Overview</Tabs.Trigger>
+				<Tabs.Trigger value="recent" onclick={() => (tab = 'recent')}>Last 7 Days</Tabs.Trigger>
 				<Tabs.Trigger value="sponsors" onclick={() => (tab = 'sponsors')}>Sponsors</Tabs.Trigger>
 			</Tabs.List>
 		</Tabs.Root>
 	</div>
+
 	{#if tab === 'details'}
 		<svelte:boundary>
 			{#snippet pending()}
-				<div></div>
+				<div class="animate-pulse space-y-6">
+					<div class="h-64 rounded-xl bg-muted"></div>
+					<div class="h-64 rounded-xl bg-muted"></div>
+				</div>
 			{/snippet}
-			<div class="flex flex-col gap-8">
+			<div class="space-y-6">
 				<ChannelVideos {channelId} />
 				<ChannelNotifications {channelId} />
 			</div>
@@ -63,14 +68,14 @@
 	{:else if tab === 'recent'}
 		<svelte:boundary>
 			{#snippet pending()}
-				<div></div>
+				<div class="h-64 animate-pulse rounded-xl bg-muted"></div>
 			{/snippet}
 			<ChannelLastSevenVids {channelId} />
 		</svelte:boundary>
 	{:else if tab === 'sponsors'}
 		<svelte:boundary>
 			{#snippet pending()}
-				<div></div>
+				<div class="h-64 animate-pulse rounded-xl bg-muted"></div>
 			{/snippet}
 			<ChannelSponsorsTable {channelId} />
 		</svelte:boundary>

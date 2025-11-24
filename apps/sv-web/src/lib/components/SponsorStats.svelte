@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { formatNumber, formatDate } from '$lib/utils';
+	import { Eye, Video, Calendar } from '@lucide/svelte';
+
 	const {
 		sponsorData
 	}: {
@@ -6,47 +9,50 @@
 			ReturnType<typeof import('$lib/remote/channels.remote').remoteGetSponsorDetails>
 		>;
 	} = $props();
-
-	const formatNumber = (num: number) => {
-		if (num >= 1000000) {
-			return (num / 1000000).toFixed(1) + 'M';
-		}
-		if (num >= 1000) {
-			return (num / 1000).toFixed(1) + 'K';
-		}
-		return num.toString();
-	};
-
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	};
 </script>
 
 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-	<div class="rounded-lg border border-border bg-card p-6">
-		<h3 class="text-sm font-medium text-muted-foreground">Total Views</h3>
-		<p class="mt-2 text-3xl font-bold text-card-foreground">
-			{formatNumber(sponsorData.stats.totalViews)}
-		</p>
+	<div class="rounded-xl border border-border bg-card p-5">
+		<div class="flex items-center gap-3">
+			<div class="rounded-lg bg-primary/10 p-2">
+				<Eye class="h-5 w-5 text-primary" />
+			</div>
+			<div>
+				<p class="text-sm font-medium text-muted-foreground">Total Views</p>
+				<p class="text-2xl font-bold text-card-foreground tabular-nums">
+					{formatNumber(sponsorData.stats.totalViews)}
+				</p>
+			</div>
+		</div>
 	</div>
-	<div class="rounded-lg border border-border bg-card p-6">
-		<h3 class="text-sm font-medium text-muted-foreground">Total Ads</h3>
-		<p class="mt-2 text-3xl font-bold text-card-foreground">
-			{sponsorData.stats.totalAds}
-		</p>
+	<div class="rounded-xl border border-border bg-card p-5">
+		<div class="flex items-center gap-3">
+			<div class="rounded-lg bg-primary/10 p-2">
+				<Video class="h-5 w-5 text-primary" />
+			</div>
+			<div>
+				<p class="text-sm font-medium text-muted-foreground">Total Ads</p>
+				<p class="text-2xl font-bold text-card-foreground tabular-nums">
+					{sponsorData.stats.totalAds}
+				</p>
+			</div>
+		</div>
 	</div>
-	<div class="rounded-lg border border-border bg-card p-6">
-		<h3 class="text-sm font-medium text-muted-foreground">Last Publish Date</h3>
-		<p class="mt-2 text-3xl font-bold text-card-foreground">
-			{#if sponsorData.stats.lastPublishDate}
-				{formatDate(new Date(sponsorData.stats.lastPublishDate))}
-			{:else}
-				—
-			{/if}
-		</p>
+	<div class="rounded-xl border border-border bg-card p-5">
+		<div class="flex items-center gap-3">
+			<div class="rounded-lg bg-primary/10 p-2">
+				<Calendar class="h-5 w-5 text-primary" />
+			</div>
+			<div>
+				<p class="text-sm font-medium text-muted-foreground">Last Publish</p>
+				<p class="text-2xl font-bold text-card-foreground">
+					{#if sponsorData.stats.lastPublishDate}
+						{formatDate(new Date(sponsorData.stats.lastPublishDate))}
+					{:else}
+						<span class="text-muted-foreground">—</span>
+					{/if}
+				</p>
+			</div>
+		</div>
 	</div>
 </div>

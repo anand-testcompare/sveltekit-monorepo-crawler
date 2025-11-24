@@ -1,29 +1,27 @@
 <script lang="ts">
 	import { remoteGetChannelNotifications } from '$lib/remote/channels.remote';
-	import { Badge } from './ui/badge';
+	import { createRawSnippet } from 'svelte';
+	import {
+		renderComponent,
+		renderSnippet,
+		createSvelteTable,
+		FlexRender
+	} from '$lib/components/ui/data-table/index.js';
+	import DataTableColumnHeader from '$lib/components/ui/data-table/data-table-column-header.svelte';
+	import * as Table from '$lib/components/ui/table/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
+	import {
+		getCoreRowModel,
+		getSortedRowModel,
+		type ColumnDef,
+		type SortingState
+	} from '@tanstack/table-core';
+	import { formatRelativeTime } from '$lib/utils';
+	import { Bell } from '@lucide/svelte';
 
 	const { channelId }: { channelId: string } = $props();
 
 	const notifications = $derived(await remoteGetChannelNotifications(channelId));
-
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	};
-
-	const formatRelativeTime = (date: Date) => {
-		const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-
-		if (seconds < 60) return 'just now';
-		if (seconds < 3600) return `${Math.floor(seconds / 60)} minutes ago`;
-		if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-		if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
-
-		return formatDate(date);
-	};
 
 	const getNotificationTypeLabel = (type: string) => {
 		return type
@@ -31,70 +29,171 @@
 			.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
 			.join(' ');
 	};
+
+	type Notification = (typeof notifications)[number];
+
+	const columns: ColumnDef<Notification>[] = [
+		{
+			accessorKey: 'type',
+			header: 'Type',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ type: string }]>((params) => {
+					const { type } = params();
+					const label = getNotificationTypeLabel(type);
+					return {
+						render: () =>
+							`<span class="inline-flex items-center rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">${label}</span>`
+					};
+				});
+				return renderSnippet(snippet, { type: row.original.type });
+			}
+		},
+		{
+			accessorKey: 'success',
+			header: 'Status',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ success: boolean }]>((params) => {
+					const { success } = params();
+					if (success) {
+						return {
+							render: () =>
+								`<span class="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">Success</span>`
+						};
+					}
+					return {
+						render: () =>
+							`<span class="inline-flex items-center rounded-md bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">Failed</span>`
+					};
+				});
+				return renderSnippet(snippet, { success: row.original.success });
+			}
+		},
+		{
+			accessorKey: 'message',
+			header: 'Message',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ message: string }]>((params) => {
+					const { message } = params();
+					return {
+						render: () =>
+							`<span class="text-sm text-foreground max-w-md truncate block">${message}</span>`
+					};
+				});
+				return renderSnippet(snippet, { message: row.original.message });
+			}
+		},
+		{
+			accessorKey: 'videoTitle',
+			header: 'Video',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ title: string }]>((params) => {
+					const { title } = params();
+					return {
+						render: () =>
+							`<span class="text-sm text-muted-foreground max-w-xs truncate block">${title}</span>`
+					};
+				});
+				return renderSnippet(snippet, { title: row.original.videoTitle });
+			}
+		},
+		{
+			accessorKey: 'createdAt',
+			header: ({ column }) =>
+				renderComponent(DataTableColumnHeader, {
+					title: 'Time',
+					isSorted: column.getIsSorted(),
+					onclick: column.getToggleSortingHandler()
+				}),
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ date: Date }]>((params) => {
+					const { date } = params();
+					return {
+						render: () =>
+							`<span class="text-sm text-muted-foreground">${formatRelativeTime(date)}</span>`
+					};
+				});
+				return renderSnippet(snippet, { date: row.original.createdAt });
+			},
+			sortingFn: 'datetime'
+		}
+	];
+
+	let sorting = $state<SortingState>([{ id: 'createdAt', desc: true }]);
+
+	const table = createSvelteTable({
+		get data() {
+			return notifications;
+		},
+		columns,
+		state: {
+			get sorting() {
+				return sorting;
+			}
+		},
+		onSortingChange: (updater) => {
+			if (typeof updater === 'function') {
+				sorting = updater(sorting);
+			} else {
+				sorting = updater;
+			}
+		},
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel()
+	});
 </script>
 
-<div>
-	<h2 class="mb-4 text-xl font-semibold text-foreground">Recent Notifications</h2>
+<div class="space-y-4">
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-3">
+			<h2 class="text-lg font-semibold text-foreground">Notifications</h2>
+			<Badge variant="secondary">{notifications.length}</Badge>
+		</div>
+	</div>
 	{#if notifications.length === 0}
-		<div class="rounded-lg border border-border bg-muted p-8">
-			<p class="text-center text-muted-foreground">No notifications found</p>
+		<div
+			class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 p-12"
+		>
+			<div class="rounded-full bg-muted p-3">
+				<Bell class="h-6 w-6 text-muted-foreground" />
+			</div>
+			<p class="mt-3 text-sm text-muted-foreground">No notifications yet</p>
 		</div>
 	{:else}
-		<div class="max-h-[600px] overflow-hidden rounded-lg border border-border bg-card">
-			<div class="max-h-[600px] overflow-y-auto">
-				<table class="w-full">
-					<thead class="sticky top-0 z-10 border-b border-border bg-muted">
-						<tr>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Type</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Status</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Message</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Video</th
-							>
-							<th
-								class="px-6 py-3 text-left text-xs font-medium tracking-wide text-muted-foreground uppercase"
-								>Time</th
-							>
-						</tr>
-					</thead>
-					<tbody class="divide-y divide-border">
-						{#each notifications as notification}
-							<tr class="hover:bg-muted/50">
-								<td class="px-6 py-4">
-									<Badge variant="secondary">
-										{getNotificationTypeLabel(notification.type)}
-									</Badge>
-								</td>
-								<td class="px-6 py-4">
-									<Badge variant={notification.success ? 'default' : 'destructive'}>
-										{notification.success ? 'Success' : 'Failed'}
-									</Badge>
-								</td>
-								<td class="px-6 py-4">
-									<p class="max-w-md text-sm text-card-foreground">{notification.message}</p>
-								</td>
-								<td class="px-6 py-4">
-									<p class="max-w-md truncate text-sm text-muted-foreground">
-										{notification.videoTitle}
-									</p>
-								</td>
-								<td class="px-6 py-4 text-sm text-muted-foreground"
-									>{formatRelativeTime(notification.createdAt)}</td
-								>
-							</tr>
+		<div class="overflow-hidden rounded-xl border border-border">
+			<div class="max-h-[500px] overflow-y-auto">
+				<Table.Root>
+					<Table.Header class="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
+						{#key sorting}
+							{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+								<Table.Row class="hover:bg-transparent">
+									{#each headerGroup.headers as header (header.id)}
+										<Table.Head
+											class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+										>
+											{#if !header.isPlaceholder}
+												<FlexRender
+													content={header.column.columnDef.header}
+													context={header.getContext()}
+												/>
+											{/if}
+										</Table.Head>
+									{/each}
+								</Table.Row>
+							{/each}
+						{/key}
+					</Table.Header>
+					<Table.Body>
+						{#each table.getRowModel().rows as row (row.id)}
+							<Table.Row class="group">
+								{#each row.getVisibleCells() as cell (cell.id)}
+									<Table.Cell class="py-3">
+										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
+									</Table.Cell>
+								{/each}
+							</Table.Row>
 						{/each}
-					</tbody>
-				</table>
+					</Table.Body>
+				</Table.Root>
 			</div>
 		</div>
 	{/if}

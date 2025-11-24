@@ -6,6 +6,8 @@
 	import ChannelHeader from '$lib/components/ChannelHeader.svelte';
 	import z from 'zod';
 	import { useSearchParams } from 'runed/kit';
+	import { formatNumber, formatDate } from '$lib/utils';
+	import { Eye, ThumbsUp, ExternalLink } from '@lucide/svelte';
 
 	const videoParamsSchema = z.object({
 		videoId: z.string().default(''),
@@ -19,107 +21,110 @@
 
 	const videoData = $derived(await remoteGetVideoDetails(videoId));
 	const channel = $derived(await remoteGetChannelDetails(channelId));
-
-	const formatNumber = (num: number) => {
-		if (num >= 1000000) {
-			return (num / 1000000).toFixed(1) + 'M';
-		}
-		if (num >= 1000) {
-			return (num / 1000).toFixed(1) + 'K';
-		}
-		return num.toString();
-	};
-
-	const formatDate = (date: Date) => {
-		return date.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	};
 </script>
 
-<div class="flex flex-col gap-4 p-8 pb-24">
-	<ChannelHeader {channelId} />
-	<div class="mb-6">
-		<Breadcrumb.Root>
-			<Breadcrumb.List>
-				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app">Channels</Breadcrumb.Link>
-				</Breadcrumb.Item>
-				<Breadcrumb.Separator />
-				<Breadcrumb.Item>
-					<Breadcrumb.Link href="/app/view/channel?channelId={channelId}"
-						>{channel.name}</Breadcrumb.Link
-					>
-				</Breadcrumb.Item>
-				<Breadcrumb.Separator />
-				<Breadcrumb.Item>
-					<Breadcrumb.Page>{videoData.video.title}</Breadcrumb.Page>
-				</Breadcrumb.Item>
-			</Breadcrumb.List>
-		</Breadcrumb.Root>
-	</div>
-	<div class="mb-8 flex items-center justify-between">
-		<div>
-			<a
-				class="text-3xl font-bold text-foreground"
-				href="https://www.youtube.com/watch?v={videoData.video.ytVideoId}"
-				target="_blank">{videoData.video.title}</a
-			>
-			<p class="mt-2 text-sm text-muted-foreground">
-				Published: {formatDate(videoData.video.publishedAt)}
-			</p>
-		</div>
-	</div>
+<svelte:head>
+	<title>{videoData.video.title}</title>
+</svelte:head>
 
-	<div class="space-y-8">
-		<div class="flex gap-4">
-			<div>
+<div class="flex flex-col gap-6 p-8 pb-24">
+	<ChannelHeader {channelId} />
+
+	<Breadcrumb.Root>
+		<Breadcrumb.List>
+			<Breadcrumb.Item>
+				<Breadcrumb.Link href="/app">Channels</Breadcrumb.Link>
+			</Breadcrumb.Item>
+			<Breadcrumb.Separator />
+			<Breadcrumb.Item>
+				<Breadcrumb.Link href="/app/view/channel?channelId={channelId}"
+					>{channel.name}</Breadcrumb.Link
+				>
+			</Breadcrumb.Item>
+			<Breadcrumb.Separator />
+			<Breadcrumb.Item>
+				<Breadcrumb.Page class="max-w-[300px] truncate">{videoData.video.title}</Breadcrumb.Page>
+			</Breadcrumb.Item>
+		</Breadcrumb.List>
+	</Breadcrumb.Root>
+
+	<!-- Video Header -->
+	<div class="rounded-xl border border-border bg-card p-6">
+		<div class="flex gap-6">
+			<a
+				href="https://www.youtube.com/watch?v={videoData.video.ytVideoId}"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="group relative shrink-0"
+			>
 				<img
 					src={videoData.video.thumbnailUrl}
 					alt={videoData.video.title}
-					class="h-32 w-56 rounded-lg object-cover"
+					class="h-36 w-64 rounded-lg object-cover transition-all group-hover:ring-2 group-hover:ring-primary/50"
 				/>
-			</div>
-			<div class="flex items-center gap-6">
+				<div
+					class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 transition-all group-hover:bg-black/20"
+				>
+					<ExternalLink
+						class="h-8 w-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
+					/>
+				</div>
+			</a>
+			<div class="flex flex-1 flex-col justify-between">
 				<div>
-					<h2 class="text-sm font-medium text-muted-foreground">Channel</h2>
-					{#if videoData.channel}
-						<a
-							href="/app/view/channel?channelId={videoData.channel.ytChannelId}"
-							class="mt-1 text-lg font-semibold text-foreground hover:text-primary"
-						>
-							{videoData.channel.name}
-						</a>
+					<a
+						href="https://www.youtube.com/watch?v={videoData.video.ytVideoId}"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="line-clamp-2 text-xl font-semibold text-foreground transition-colors hover:text-primary"
+					>
+						{videoData.video.title}
+					</a>
+					<p class="mt-1 text-sm text-muted-foreground">
+						Published {formatDate(videoData.video.publishedAt)}
+					</p>
+				</div>
+				<div class="flex items-center gap-6">
+					<div class="flex items-center gap-2">
+						<div class="rounded-lg bg-primary/10 p-2">
+							<Eye class="h-4 w-4 text-primary" />
+						</div>
+						<div>
+							<p class="text-xs text-muted-foreground">Views</p>
+							<p class="text-lg font-bold tabular-nums">
+								{formatNumber(videoData.video.viewCount)}
+							</p>
+						</div>
+					</div>
+					<div class="flex items-center gap-2">
+						<div class="rounded-lg bg-primary/10 p-2">
+							<ThumbsUp class="h-4 w-4 text-primary" />
+						</div>
+						<div>
+							<p class="text-xs text-muted-foreground">Likes</p>
+							<p class="text-lg font-bold tabular-nums">
+								{formatNumber(videoData.video.likeCount)}
+							</p>
+						</div>
+					</div>
+					{#if videoData.sponsor}
+						<div class="ml-auto">
+							<p class="mb-1 text-xs text-muted-foreground">Sponsor</p>
+							<a
+								href="/app/view/sponsor?sponsorId={videoData.sponsor
+									.sponsorId}&channelId={channelId}"
+								class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+							>
+								{videoData.sponsor.name}
+							</a>
+						</div>
 					{/if}
 				</div>
-				<div>
-					<h3 class="text-sm font-medium text-muted-foreground">Views</h3>
-					<p class="mt-1 text-2xl font-bold text-foreground">
-						{formatNumber(videoData.video.viewCount)}
-					</p>
-				</div>
-				<div>
-					<h3 class="text-sm font-medium text-muted-foreground">Likes</h3>
-					<p class="mt-1 text-2xl font-bold text-foreground">
-						{formatNumber(videoData.video.likeCount)}
-					</p>
-				</div>
-				{#if videoData.sponsor}
-					<div>
-						<h3 class="text-sm font-medium text-muted-foreground">Sponsor</h3>
-						<a
-							href="/app/view/sponsor?sponsorId={videoData.sponsor.sponsorId}&channelId={channelId}"
-							class="mt-1 inline-flex items-center rounded-full px-3 py-1 font-medium text-primary ring-2 ring-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-						>
-							{videoData.sponsor.name}
-						</a>
-					</div>
-				{/if}
 			</div>
 		</div>
+	</div>
 
+	<div class="space-y-6">
 		<VideoNotificationsTable {videoData} />
 		<VideoCommentsTable {videoData} />
 	</div>

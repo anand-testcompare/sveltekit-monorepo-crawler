@@ -9,48 +9,32 @@
 	} from '$lib/components/ui/data-table/index.js';
 	import DataTableColumnHeader from '$lib/components/ui/data-table/data-table-column-header.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
+	import { Badge } from '$lib/components/ui/badge/index.js';
 	import {
 		getCoreRowModel,
 		getSortedRowModel,
 		type ColumnDef,
 		type SortingState
 	} from '@tanstack/table-core';
+	import { formatNumber, formatDate } from '$lib/utils';
+	import { Users } from '@lucide/svelte';
 
 	const { channelId }: { channelId: string } = $props();
 
 	const sponsors = $derived(await remoteGetChannelSponsors(channelId));
-
-	const formatNumber = (num: number) => {
-		if (num >= 1000000) {
-			return (num / 1000000).toFixed(1) + 'M';
-		}
-		if (num >= 1000) {
-			return (num / 1000).toFixed(1) + 'K';
-		}
-		return num.toString();
-	};
-
-	const formatDate = (date: Date | string) => {
-		const d = new Date(date);
-		return d.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	};
 
 	type Sponsor = (typeof sponsors)[number];
 
 	const columns: ColumnDef<Sponsor>[] = [
 		{
 			accessorKey: 'name',
-			header: 'Sponsor Name',
+			header: 'Sponsor',
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ sponsor: Sponsor; channelId: string }]>((params) => {
 					const { sponsor, channelId } = params();
 					return {
 						render: () =>
-							`<a href="/app/view/sponsor?sponsorId=${sponsor.sponsorId}&channelId=${channelId}" class="text-sm font-medium text-card-foreground transition-colors hover:text-primary">${sponsor.name}</a>`
+							`<a href="/app/view/sponsor?sponsorId=${sponsor.sponsorId}&channelId=${channelId}" class="font-medium text-foreground hover:text-primary transition-colors">${sponsor.name}</a>`
 					};
 				});
 				return renderSnippet(snippet, { sponsor: row.original, channelId });
@@ -58,12 +42,12 @@
 		},
 		{
 			accessorKey: 'sponsorKey',
-			header: 'Sponsor Key',
+			header: 'Key',
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ key: string }]>((params) => {
 					const { key } = params();
 					return {
-						render: () => `<div class="text-sm text-muted-foreground">${key}</div>`
+						render: () => `<span class="font-mono text-xs text-muted-foreground">${key}</span>`
 					};
 				});
 				return renderSnippet(snippet, { key: row.original.sponsorKey });
@@ -81,7 +65,7 @@
 				const snippet = createRawSnippet<[{ views: number }]>((params) => {
 					const { views } = params();
 					return {
-						render: () => `<div class="text-sm text-muted-foreground">${formatNumber(views)}</div>`
+						render: () => `<span class="tabular-nums">${formatNumber(views)}</span>`
 					};
 				});
 				return renderSnippet(snippet, { views: row.original.totalViews });
@@ -91,7 +75,7 @@
 			accessorKey: 'totalVideos',
 			header: ({ column }) =>
 				renderComponent(DataTableColumnHeader, {
-					title: 'Total Videos',
+					title: 'Videos',
 					isSorted: column.getIsSorted(),
 					onclick: column.getToggleSortingHandler()
 				}),
@@ -99,7 +83,7 @@
 				const snippet = createRawSnippet<[{ count: number }]>((params) => {
 					const { count } = params();
 					return {
-						render: () => `<div class="text-sm text-muted-foreground">${count}</div>`
+						render: () => `<span class="tabular-nums">${count}</span>`
 					};
 				});
 				return renderSnippet(snippet, { count: row.original.totalVideos });
@@ -109,24 +93,20 @@
 			accessorKey: 'lastVideoPublishedAt',
 			header: ({ column }) =>
 				renderComponent(DataTableColumnHeader, {
-					title: 'Last Video Published',
+					title: 'Last Published',
 					isSorted: column.getIsSorted(),
 					onclick: column.getToggleSortingHandler()
 				}),
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ date: Date | string | null }]>((params) => {
 					const { date } = params();
+					if (!date) return { render: () => `<span class="text-muted-foreground/50">Never</span>` };
 					return {
-						render: () =>
-							date
-								? `<div class="text-sm text-muted-foreground">${formatDate(date)}</div>`
-								: `<span class="text-sm text-muted-foreground/50">Never</span>`
+						render: () => `<span class="text-muted-foreground">${formatDate(date)}</span>`
 					};
 				});
 				const { lastVideoPublishedAt } = row.original;
-
 				const dateProp = lastVideoPublishedAt ? new Date(lastVideoPublishedAt) : null;
-
 				return renderSnippet(snippet, { date: dateProp });
 			},
 			sortingFn: 'datetime'
@@ -137,11 +117,16 @@
 			cell: ({ row }) => {
 				const snippet = createRawSnippet<[{ daysAgo: number | null }]>((params) => {
 					const { daysAgo } = params();
+					if (daysAgo === null)
+						return { render: () => `<span class="text-muted-foreground/50">—</span>` };
+					const color =
+						daysAgo <= 7
+							? 'text-primary'
+							: daysAgo <= 30
+								? 'text-foreground'
+								: 'text-muted-foreground';
 					return {
-						render: () =>
-							daysAgo !== null
-								? `<div class="text-sm text-muted-foreground">${daysAgo} days</div>`
-								: `<span class="text-sm text-muted-foreground/50">—</span>`
+						render: () => `<span class="tabular-nums ${color}">${daysAgo}d</span>`
 					};
 				});
 				return renderSnippet(snippet, { daysAgo: row.original.lastVideoPublishedDaysAgo });
@@ -173,46 +158,54 @@
 	});
 </script>
 
-<div>
-	<h2 class="mb-4 text-xl font-semibold text-foreground">All Channel Sponsors</h2>
+<div class="space-y-4">
+	<div class="flex items-center justify-between">
+		<div class="flex items-center gap-3">
+			<h2 class="text-lg font-semibold text-foreground">Sponsors</h2>
+			<Badge variant="secondary">{sponsors.length}</Badge>
+		</div>
+	</div>
 	{#if sponsors.length === 0}
-		<div class="rounded-lg border border-border bg-muted p-8">
-			<p class="text-center text-muted-foreground">No sponsors found</p>
+		<div
+			class="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 p-12"
+		>
+			<div class="rounded-full bg-muted p-3">
+				<Users class="h-6 w-6 text-muted-foreground" />
+			</div>
+			<p class="mt-3 text-sm text-muted-foreground">No sponsors found for this channel</p>
 		</div>
 	{:else}
-		<div class="max-h-[600px] overflow-hidden rounded-lg border border-border bg-card">
-			<div class="max-h-[600px] overflow-y-auto">
+		<div class="overflow-hidden rounded-xl border border-border">
+			<div class="max-h-[500px] overflow-y-auto">
 				<Table.Root>
-					<Table.Header class="sticky top-0 z-10 bg-muted">
-						{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-							<Table.Row>
-								{#each headerGroup.headers as header (header.id)}
-									<Table.Head>
-										{#if !header.isPlaceholder}
-											<FlexRender
-												content={header.column.columnDef.header}
-												context={header.getContext()}
-											/>
-										{/if}
-									</Table.Head>
-								{/each}
-							</Table.Row>
-						{/each}
+					<Table.Header class="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
+						{#key sorting}
+							{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+								<Table.Row class="hover:bg-transparent">
+									{#each headerGroup.headers as header (header.id)}
+										<Table.Head
+											class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+										>
+											{#if !header.isPlaceholder}
+												<FlexRender
+													content={header.column.columnDef.header}
+													context={header.getContext()}
+												/>
+											{/if}
+										</Table.Head>
+									{/each}
+								</Table.Row>
+							{/each}
+						{/key}
 					</Table.Header>
 					<Table.Body>
 						{#each table.getRowModel().rows as row (row.id)}
-							<Table.Row data-state={row.getIsSelected() && 'selected'}>
+							<Table.Row class="group">
 								{#each row.getVisibleCells() as cell (cell.id)}
-									<Table.Cell>
+									<Table.Cell class="py-3">
 										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
 									</Table.Cell>
 								{/each}
-							</Table.Row>
-						{:else}
-							<Table.Row>
-								<Table.Cell colspan={columns.length} class="h-24 text-center"
-									>No results.</Table.Cell
-								>
 							</Table.Row>
 						{/each}
 					</Table.Body>
