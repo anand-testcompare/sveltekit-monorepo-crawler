@@ -11,6 +11,7 @@
 		FlexRender
 	} from '$lib/components/ui/data-table/index.js';
 	import DataTableColumnHeader from '$lib/components/ui/data-table/data-table-column-header.svelte';
+	import ExpandableComment from '$lib/components/ExpandableComment.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import {
 		getCoreRowModel,
@@ -69,23 +70,11 @@
 		{
 			accessorKey: 'text',
 			header: 'Comment',
-			size: 350,
-			cell: ({ row }) => {
-				const snippet = createRawSnippet<[{ text: string; videoId: string; commentId: string }]>(
-					(params) => {
-						const { text, videoId, commentId } = params();
-						return {
-							render: () =>
-								`<a href="https://www.youtube.com/watch?v=${videoId}&lc=${commentId}" target="_blank" class="text-sm text-foreground hover:text-primary transition-colors line-clamp-2">${text}</a>`
-						};
-					}
-				);
-				return renderSnippet(snippet, {
-					text: row.original.text,
-					videoId: videoData.video.ytVideoId,
-					commentId: row.original.ytCommentId
-				});
-			}
+			size: 300,
+			cell: ({ row }) =>
+				renderComponent(ExpandableComment, {
+					text: row.original.text
+				})
 		},
 		{
 			accessorKey: 'likeCount',
@@ -183,6 +172,25 @@
 					};
 				});
 				return renderSnippet(snippet, {});
+			}
+		},
+		{
+			id: 'link',
+			header: '',
+			size: 50,
+			cell: ({ row }) => {
+				const snippet = createRawSnippet<[{ videoId: string; commentId: string }]>((params) => {
+					const { videoId, commentId } = params();
+					const url = `https://www.youtube.com/watch?v=${videoId}&lc=${commentId}`;
+					return {
+						render: () =>
+							`<a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></a>`
+					};
+				});
+				return renderSnippet(snippet, {
+					videoId: videoData.video.ytVideoId,
+					commentId: row.original.ytCommentId
+				});
 			}
 		}
 	];

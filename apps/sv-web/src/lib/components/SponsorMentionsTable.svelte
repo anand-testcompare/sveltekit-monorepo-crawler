@@ -8,6 +8,7 @@
 		FlexRender
 	} from '$lib/components/ui/data-table/index.js';
 	import DataTableColumnHeader from '$lib/components/ui/data-table/data-table-column-header.svelte';
+	import ExpandableComment from '$lib/components/ExpandableComment.svelte';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import {
@@ -39,21 +40,10 @@
 			accessorKey: 'text',
 			header: 'Comment',
 			size: 400,
-			cell: ({ row }) => {
-				const snippet = createRawSnippet<[{ text: string }]>((params) => {
-					const { text } = params();
-					const escaped = text
-						.replace(/&/g, '&amp;')
-						.replace(/</g, '&lt;')
-						.replace(/>/g, '&gt;')
-						.replace(/"/g, '&quot;');
-					return {
-						render: () =>
-							`<p class="text-sm text-foreground line-clamp-2" title="${escaped}">${escaped}</p>`
-					};
-				});
-				return renderSnippet(snippet, { text: row.original.text });
-			}
+			cell: ({ row }) =>
+				renderComponent(ExpandableComment, {
+					text: row.original.text
+				})
 		},
 		{
 			accessorKey: 'videoTitle',
@@ -187,14 +177,14 @@
 	{:else}
 		<div class="overflow-hidden rounded-xl border border-border">
 			<div class="max-h-[500px] overflow-y-auto">
-				<Table.Root style="width: fit-content; min-width: 100%;">
+				<Table.Root class="w-full table-fixed">
 					<Table.Header class="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm">
 						{#key sorting}
 							{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 								<Table.Row class="hover:bg-transparent">
 									{#each headerGroup.headers as header (header.id)}
 										<Table.Head
-											style="width: {header.getSize()}px; min-width: {header.getSize()}px;"
+											style="width: {header.getSize()}px"
 											class="h-11 text-xs font-medium tracking-wide text-muted-foreground uppercase"
 										>
 											{#if !header.isPlaceholder}
@@ -213,10 +203,7 @@
 						{#each table.getRowModel().rows as row (row.id)}
 							<Table.Row class="group">
 								{#each row.getVisibleCells() as cell (cell.id)}
-									<Table.Cell
-										style="width: {cell.column.getSize()}px; min-width: {cell.column.getSize()}px;"
-										class="py-3"
-									>
+									<Table.Cell style="width: {cell.column.getSize()}px" class="py-3">
 										<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
 									</Table.Cell>
 								{/each}
