@@ -22,7 +22,11 @@ const dbService = Effect.gen(function* () {
 
 	const drizzle = yield* Effect.acquireRelease(
 		Effect.try(() => getDrizzleInstance(dbUrl)),
-		(db) => Effect.sync(() => db.$client.end())
+		(db) =>
+			Effect.sync(() => {
+				console.log('Closing database connection...');
+				db.$client.end();
+			})
 	).pipe(
 		Effect.catchAll((err) => {
 			console.error('Failed to connect to database...', err);
