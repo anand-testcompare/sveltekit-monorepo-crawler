@@ -24,7 +24,11 @@
 </script>
 
 <svelte:head>
-	<title>{channel?.name}</title>
+	<title>{channel?.name} - r8y 3.0</title>
+	<meta
+		name="description"
+		content="View detailed analytics, recent videos, sponsors, and notifications for {channel?.name}."
+	/>
 </svelte:head>
 
 <div class="flex flex-col gap-6 p-8">

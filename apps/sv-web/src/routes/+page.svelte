@@ -21,6 +21,14 @@
 	};
 </script>
 
+<svelte:head>
+	<title>r8y 3.0 - YouTube Channel Analytics & Sponsor Tracking</title>
+	<meta
+		name="description"
+		content="Track YouTube channel analytics, monitor sponsors, and analyze video performance across your channels."
+	/>
+</svelte:head>
+
 {#if authStore.isLoading}
 	<RootLoader />
 {:else if authStore.isAuthenticated}

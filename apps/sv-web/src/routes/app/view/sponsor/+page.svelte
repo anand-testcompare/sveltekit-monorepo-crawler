@@ -24,7 +24,12 @@
 </script>
 
 <svelte:head>
-	<title>{sponsor.sponsor.name} - {channel.name}</title>
+	<title>{sponsor.sponsor.name} - {channel.name} - r8y 3.0</title>
+	<meta
+		name="description"
+		content="Track sponsor mentions, videos, and performance metrics for {sponsor.sponsor
+			.name} on {channel.name}."
+	/>
 </svelte:head>
 
 <div class="flex flex-col gap-6 p-8">

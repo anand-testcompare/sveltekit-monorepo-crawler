@@ -24,7 +24,12 @@
 </script>
 
 <svelte:head>
-	<title>{videoData.video.title}</title>
+	<title>{videoData.video.title} - r8y 3.0</title>
+	<meta
+		name="description"
+		content="View video analytics, comments, notifications, and sponsor details for {videoData.video
+			.title}."
+	/>
 </svelte:head>
 
 <div class="flex flex-col gap-6 p-8 pb-24">

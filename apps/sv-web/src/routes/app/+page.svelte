@@ -5,6 +5,14 @@
 	import { Plus } from '@lucide/svelte';
 </script>
 
+<svelte:head>
+	<title>Channels - r8y 3.0</title>
+	<meta
+		name="description"
+		content="View and manage all your YouTube channels in one place with detailed statistics and performance metrics."
+	/>
+</svelte:head>
+
 <div class="p-8">
 	<Breadcrumb.Root class="mb-6">
 		<Breadcrumb.List>

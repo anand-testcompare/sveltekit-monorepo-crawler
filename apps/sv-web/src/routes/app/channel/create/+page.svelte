@@ -12,6 +12,14 @@
 	const { channelName, findSponsorPrompt, ytChannelId } = remoteCreateChannel.fields;
 </script>
 
+<svelte:head>
+	<title>Create Channel - r8y 3.0</title>
+	<meta
+		name="description"
+		content="Add a new YouTube channel to track analytics, sponsors, and video performance."
+	/>
+</svelte:head>
+
 <div class="flex h-full w-full flex-col items-center justify-center gap-4 p-8">
 	<form
 		{...remoteCreateChannel.enhance(async ({ form, submit, data }) => {
