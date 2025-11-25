@@ -6,13 +6,6 @@
 		value = $bindable(),
 		...restProps
 	}: DropdownMenuPrimitive.RadioGroupProps = $props();
-
-	// Handle value prop to avoid exactOptionalPropertyTypes issues
-	$effect(() => {
-		if (value !== undefined) {
-			// Value is handled via bind:value
-		}
-	});
 </script>
 
 <DropdownMenuPrimitive.RadioGroup

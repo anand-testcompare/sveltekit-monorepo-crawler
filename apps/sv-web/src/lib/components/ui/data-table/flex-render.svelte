@@ -5,6 +5,7 @@
 	import type { CellContext, ColumnDefTemplate, HeaderContext } from '@tanstack/table-core';
 	import { RenderComponentConfig, RenderSnippetConfig } from './render-helpers.js';
 	import type { Attachment } from 'svelte/attachments';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	type Props = {
 		/** The cell or header field of the current cell's column definition. */
 		content?: TContext extends HeaderContext<TData, TValue>

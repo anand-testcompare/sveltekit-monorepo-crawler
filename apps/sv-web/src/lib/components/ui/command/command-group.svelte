@@ -26,5 +26,5 @@
 			{heading}
 		</CommandPrimitive.GroupHeading>
 	{/if}
-	<CommandPrimitive.GroupItems {...children !== undefined && { children }} />
+	<CommandPrimitive.GroupItems children={children as any} />
 </CommandPrimitive.Group>
