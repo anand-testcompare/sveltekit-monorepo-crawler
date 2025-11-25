@@ -1,3 +1,4 @@
+import { BunContext } from '@effect/platform-bun';
 import { DbError, DbService } from '$lib/services/db';
 import { error } from '@sveltejs/kit';
 import { Effect, Cause, ManagedRuntime, Layer } from 'effect';
@@ -17,13 +18,18 @@ export class AppError extends TaggedError('AppError') {
 	}
 }
 
-const runtime = ManagedRuntime.make(Layer.mergeAll(DbService.Default, AuthService.Default));
+const appLayer = Layer.mergeAll(BunContext.layer, DbService.Default, AuthService.Default);
 
-process.on('SIGTERM', async (reason) => {
-	console.log('sveltekit:shutdown', reason);
+const runtime = ManagedRuntime.make(appLayer);
+
+const shutdown = async () => {
+	console.log('sveltekit:shutdown');
 	await runtime.dispose();
 	process.exit(0);
-});
+};
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
 
 export const remoteRunner = async <A>(
 	effect: Effect.Effect<A, AuthError | DbError | AppError, DbService | AuthService>
