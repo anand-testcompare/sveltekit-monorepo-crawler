@@ -173,12 +173,6 @@ export const remoteSearchVideosAndSponsors = query(
 				const event = yield* Effect.sync(() => getRequestEvent());
 				yield* auth.checkAuthAndFail(event);
 
-				if (!args.searchQuery || !args.channelId) {
-					return {
-						results: []
-					};
-				}
-
 				const result = yield* db.searchVideosAndSponsors(args);
 
 				return yield* Effect.succeed(result);

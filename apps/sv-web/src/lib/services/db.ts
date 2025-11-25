@@ -935,34 +935,40 @@ const dbService = Effect.gen(function* () {
 			Effect.gen(function* () {
 				const { searchQuery, channelId } = args;
 
-				const videosEffect = pipe(
-					Effect.tryPromise({
-						try: () =>
-							drizzle
-								.select()
-								.from(DB_SCHEMA.videos)
-								.where(
-									and(
-										or(
-											like(DB_SCHEMA.videos.title, `%${searchQuery}%`),
-											like(DB_SCHEMA.videos.ytVideoId, `%${searchQuery}%`)
-										),
-										eq(DB_SCHEMA.videos.ytChannelId, channelId)
-									)
-								)
-								.limit(4),
-						catch: (err) =>
-							new DbError('Failed to search videos', {
-								cause: err
-							})
-					}),
-					Effect.map((videos) =>
-						Array.map(videos, (video) => ({
-							type: 'video' as const,
-							data: video
-						}))
-					)
-				);
+				if (!searchQuery) {
+					return [];
+				}
+
+				const videosEffect = channelId
+					? pipe(
+							Effect.tryPromise({
+								try: () =>
+									drizzle
+										.select()
+										.from(DB_SCHEMA.videos)
+										.where(
+											and(
+												or(
+													like(DB_SCHEMA.videos.title, `%${searchQuery}%`),
+													like(DB_SCHEMA.videos.ytVideoId, `%${searchQuery}%`)
+												),
+												eq(DB_SCHEMA.videos.ytChannelId, channelId)
+											)
+										)
+										.limit(4),
+								catch: (err) =>
+									new DbError('Failed to search videos', {
+										cause: err
+									})
+							}),
+							Effect.map((videos) =>
+								Array.map(videos, (video) => ({
+									type: 'video' as const,
+									data: video
+								}))
+							)
+						)
+					: Effect.succeed([]);
 
 				const channelsEffect = pipe(
 					Effect.tryPromise({
@@ -990,34 +996,36 @@ const dbService = Effect.gen(function* () {
 					)
 				);
 
-				const sponsorsEffect = pipe(
-					Effect.tryPromise({
-						try: () =>
-							drizzle
-								.select()
-								.from(DB_SCHEMA.sponsors)
-								.where(
-									and(
-										or(
-											like(DB_SCHEMA.sponsors.sponsorKey, `%${searchQuery}%`),
-											like(DB_SCHEMA.sponsors.name, `%${searchQuery}%`)
-										),
-										eq(DB_SCHEMA.sponsors.ytChannelId, channelId)
-									)
-								)
-								.limit(4),
-						catch: (err) =>
-							new DbError(`Failed to search sponsors ${err}`, {
-								cause: err
-							})
-					}),
-					Effect.map((sponsors) =>
-						Array.map(sponsors, (sponsor) => ({
-							type: 'sponsor' as const,
-							data: sponsor
-						}))
-					)
-				);
+				const sponsorsEffect = channelId
+					? pipe(
+							Effect.tryPromise({
+								try: () =>
+									drizzle
+										.select()
+										.from(DB_SCHEMA.sponsors)
+										.where(
+											and(
+												or(
+													like(DB_SCHEMA.sponsors.sponsorKey, `%${searchQuery}%`),
+													like(DB_SCHEMA.sponsors.name, `%${searchQuery}%`)
+												),
+												eq(DB_SCHEMA.sponsors.ytChannelId, channelId)
+											)
+										)
+										.limit(4),
+								catch: (err) =>
+									new DbError(`Failed to search sponsors ${err}`, {
+										cause: err
+									})
+							}),
+							Effect.map((sponsors) =>
+								Array.map(sponsors, (sponsor) => ({
+									type: 'sponsor' as const,
+									data: sponsor
+								}))
+							)
+						)
+					: Effect.succeed([]);
 
 				const [videos, sponsors, channels] = yield* Effect.all(
 					[videosEffect, sponsorsEffect, channelsEffect],
